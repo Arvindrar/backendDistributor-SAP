@@ -1,158 +1,120 @@
-﻿// backendDistributor/Controllers/SalesEmployeeController.cs
+﻿// Controllers/SalesEmployeeController.cs
+using backendDistributor.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using backendDistributor.Models;
 using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
-namespace backendDistributor.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class SalesEmployeeController : ControllerBase
 {
-    [Route("api/SalesEmployee")]
-    [ApiController]
-    public class SalesEmployeeController : ControllerBase
+    private readonly SalesEmployeeService _employeeService;
+    private readonly ILogger<SalesEmployeeController> _logger;
+    private readonly CustomerDbContext _context; // The declaration for the context
+
+    public SalesEmployeeController(
+        SalesEmployeeService employeeService,
+        ILogger<SalesEmployeeController> logger,
+        CustomerDbContext context) // Step 2: Add CustomerDbContext as a parameter
     {
-        private readonly CustomerDbContext _context;
+        // Step 3: Assign the injected services to your private fields.
+        // The error you see happens if the line `_context = context;` is missing.
+        _employeeService = employeeService;
+        _logger = logger;
+        _context = context; // <<< THIS LINE IS THE FIX. MAKE SURE IT'S HERE.
+    }
 
-        public SalesEmployeeController(CustomerDbContext context)
+    // GET: api/SalesEmployee
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<SalesEmployee>>> GetSalesEmployees()
+    {
+        try
         {
-            _context = context;
+            var employees = await _employeeService.GetAllAsync();
+            return Ok(employees);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while getting sales employees.");
+            return StatusCode(500, new { message = $"Internal server error: {ex.Message}" });
+        }
+    }
+
+    // GET: api/SalesEmployee/5
+    [HttpGet("{id}")]
+    public async Task<ActionResult<SalesEmployee>> GetSalesEmployee(int id)
+    {
+        var employee = await _employeeService.GetByIdAsync(id);
+        if (employee == null) return NotFound();
+        return Ok(employee);
+    }
+
+    // POST: api/SalesEmployee
+    [HttpPost]
+    public async Task<ActionResult<SalesEmployee>> PostSalesEmployee(SalesEmployee salesEmployee)
+    {
+        // --- FIX #1: VALIDATE THE MODEL STATE ---
+        // This checks for [Required], [StringLength], [EmailAddress], etc.
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState); // Returns a 400 error with validation details
         }
 
-        // GET: api/SalesEmployee
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<SalesEmployee>>> GetSalesEmployees()
+        // --- FIX #2: BUSINESS RULE VALIDATION (CHECK FOR DUPLICATES) ---
+        var existingByName = await _context.SalesEmployees.FirstOrDefaultAsync(e => e.Name.ToLower() == salesEmployee.Name.ToLower());
+        if (existingByName != null)
         {
-            if (_context.SalesEmployees == null)
-            {
-                return NotFound("SalesEmployees DbSet is null.");
-            }
-            return await _context.SalesEmployees.OrderBy(se => se.Code).ToListAsync();
+            // Add error to ModelState and return a 400 Bad Request
+            ModelState.AddModelError("Name", "A sales employee with this name already exists.");
+            return BadRequest(ModelState);
         }
 
-        // GET: api/SalesEmployee/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<SalesEmployee>> GetSalesEmployee(int id)
+        try
         {
-            if (_context.SalesEmployees == null)
-            {
-                return NotFound("SalesEmployees DbSet is null.");
-            }
-            var salesEmployee = await _context.SalesEmployees.FindAsync(id);
-
-            if (salesEmployee == null)
-            {
-                return NotFound();
-            }
-
-            return salesEmployee;
+            var newEmployee = await _employeeService.AddAsync(salesEmployee);
+            return CreatedAtAction(nameof(GetSalesEmployee), new { id = newEmployee.Id }, newEmployee);
         }
-
-        // POST: api/SalesEmployee
-        [HttpPost]
-        public async Task<ActionResult<SalesEmployee>> PostSalesEmployee(SalesEmployee salesEmployee)
+        catch (Exception ex)
         {
-            // Model validation for [Required], [StringLength], etc. is handled automatically by [ApiController]
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (_context.SalesEmployees == null)
-            {
-                return Problem("Entity set 'CustomerDbContext.SalesEmployees' is null.");
-            }
-
-            // Check for duplicate Code or Name (case-insensitive)
-            bool codeExists = await _context.SalesEmployees.AnyAsync(se => se.Code.ToLower() == salesEmployee.Code.ToLower());
-            if (codeExists)
-            {
-                // Return a specific, user-friendly error string that the frontend can easily detect.
-                return Conflict("Sales Employee Already Exists! (Code must be unique).");
-            }
-
-            bool nameExists = await _context.SalesEmployees.AnyAsync(se => se.Name.ToLower() == salesEmployee.Name.ToLower());
-            if (nameExists)
-            {
-                return Conflict("Sales Employee Already Exists! (Name must be unique).");
-            }
-
-            _context.SalesEmployees.Add(salesEmployee);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetSalesEmployee), new { id = salesEmployee.Id }, salesEmployee);
+            _logger.LogError(ex, "Error creating new sales employee.");
+            return StatusCode(500, new { message = "An error occurred while creating the employee." });
         }
+    }
 
-        // PUT: api/SalesEmployee/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutSalesEmployee(int id, SalesEmployee salesEmployee)
+    // In your PUT method
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateSalesEmployee(int id, SalesEmployee salesEmployee)
+    {
+        if (id != salesEmployee.Id) return BadRequest("ID mismatch.");
+        if (!ModelState.IsValid) return BadRequest(ModelState);
+
+        try
         {
-            if (id != salesEmployee.Id)
-            {
-                return BadRequest("SalesEmployee ID mismatch.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Check if the new Code or Name conflicts with another existing record
-            var existingByCode = await _context.SalesEmployees.FirstOrDefaultAsync(se => se.Code.ToLower() == salesEmployee.Code.ToLower() && se.Id != id);
-            if (existingByCode != null)
-            {
-                return Conflict("Another sales employee with this code already exists.");
-            }
-
-            var existingByName = await _context.SalesEmployees.FirstOrDefaultAsync(se => se.Name.ToLower() == salesEmployee.Name.ToLower() && se.Id != id);
-            if (existingByName != null)
-            {
-                return Conflict("Another sales employee with this name already exists.");
-            }
-
-            _context.Entry(salesEmployee).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!SalesEmployeeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
+            // ... (your duplicate check logic here) ...
+            await _employeeService.UpdateAsync(id, salesEmployee);
+            return NoContent(); // Success
         }
-
-        // DELETE: api/SalesEmployee/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteSalesEmployee(int id)
+        catch (HttpRequestException sapEx) // Catch specific SAP errors
         {
-            if (_context.SalesEmployees == null)
-            {
-                return NotFound("SalesEmployees DbSet is null.");
-            }
-            var salesEmployee = await _context.SalesEmployees.FindAsync(id);
-            if (salesEmployee == null)
-            {
-                return NotFound();
-            }
-
-            _context.SalesEmployees.Remove(salesEmployee);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            _logger.LogError(sapEx, "An error occurred during SAP update.");
+            return StatusCode(502, new { message = "Failed to update record in SAP.", details = sapEx.Message });
         }
-
-        private bool SalesEmployeeExists(int id)
+        catch (KeyNotFoundException)
         {
-            return (_context.SalesEmployees?.Any(e => e.Id == id)).GetValueOrDefault();
+            return NotFound();
         }
+        catch (Exception ex) // Catch all other unexpected errors
+        {
+            _logger.LogError(ex, $"An unexpected error occurred updating employee {id}.");
+            return StatusCode(500, new { message = "An internal server error occurred." });
+        }
+    }
+    // DELETE: api/SalesEmployee/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteSalesEmployee(int id)
+    {
+        await _employeeService.DeleteAsync(id);
+        return NoContent();
     }
 }

@@ -1,151 +1,94 @@
-﻿// backendDistributor/Controllers/ShippingTypeController.cs
+﻿// Controllers/ShippingTypeController.cs
+using backendDistributor.Models;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using backendDistributor.Models; // Your models namespace
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
-namespace backendDistributor.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class ShippingTypeController : ControllerBase
 {
-    [Route("api/ShippingType")] // Explicitly set to singular to match frontend
-    [ApiController]
-    public class ShippingTypeController : ControllerBase
+    private readonly ShippingTypeService _shippingTypeService;
+    private readonly ILogger<ShippingTypeController> _logger;
+
+    public ShippingTypeController(ShippingTypeService shippingTypeService, ILogger<ShippingTypeController> logger)
     {
-        private readonly CustomerDbContext _context;
+        _shippingTypeService = shippingTypeService;
+        _logger = logger;
+    }
 
-        public ShippingTypeController(CustomerDbContext context)
+    // GET: api/ShippingType
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<ShippingType>>> GetShippingTypes()
+    {
+        try
         {
-            _context = context;
+            var shippingTypes = await _shippingTypeService.GetAllAsync();
+            return Ok(shippingTypes);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while getting shipping types.");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteShippingType(int id)
+    {
+        try
+        {
+            await _shippingTypeService.DeleteAsync(id);
+            return NoContent(); // Success (204 No Content)
+        }
+        catch (KeyNotFoundException ex)
+        {
+            _logger.LogWarning(ex, "Attempted to delete a non-existent shipping type with ID {Id}.", id);
+            return NotFound(new { message = ex.Message }); // 404 Not Found
+        }
+        catch (HttpRequestException ex) // Catches errors from SAP
+        {
+            _logger.LogError(ex, "An error from SAP occurred while deleting shipping type {Id}.", id);
+            return StatusCode(500, $"SAP Service Layer error: {ex.Message}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while deleting shipping type {Id}.", id);
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+    // POST: api/ShippingType
+    [HttpPost]
+    public async Task<ActionResult<ShippingType>> PostShippingType([FromBody] ShippingType shippingType)
+    {
+        if (shippingType == null || string.IsNullOrWhiteSpace(shippingType.Name))
+        {
+            return BadRequest(new { message = "Shipping type name cannot be empty." });
         }
 
-        // GET: api/ShippingType
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<ShippingType>>> GetShippingTypes()
+        try
         {
-            if (_context.ShippingTypes == null)
-            {
-                return NotFound("ShippingTypes DbSet is null.");
-            }
-            // Using ShippingType model from your namespace
-            return await _context.ShippingTypes.OrderBy(st => st.Name).ToListAsync();
+            var newShippingType = await _shippingTypeService.AddAsync(shippingType);
+            // Return 201 Created with the new object
+            return CreatedAtAction(nameof(GetShippingTypes), new { id = newShippingType.Id }, newShippingType);
         }
-
-        // GET: api/ShippingType/5 (Example for CreatedAtAction)
-        [HttpGet("{id}")]
-        public async Task<ActionResult<ShippingType>> GetShippingType(int id)
+        catch (InvalidOperationException ex) // Catches duplicate name error from SQL
         {
-            if (_context.ShippingTypes == null)
-            {
-                return NotFound("ShippingTypes DbSet is null.");
-            }
-            var shippingType = await _context.ShippingTypes.FindAsync(id);
-
-            if (shippingType == null)
-            {
-                return NotFound();
-            }
-
-            return shippingType;
+            _logger.LogWarning(ex, "Attempted to create a duplicate shipping type.");
+            return Conflict(new { message = ex.Message }); // Return 409 Conflict
         }
-
-        // POST: api/ShippingType
-        [HttpPost]
-        public async Task<ActionResult<ShippingType>> PostShippingType(ShippingType shippingType)
+        catch (HttpRequestException ex) // Catches errors from SAP
         {
-            if (_context.ShippingTypes == null)
+            _logger.LogError(ex, "An error from SAP occurred while creating a shipping type.");
+            // Try to return a more specific message if SAP provides one
+            if (ex.Message.Contains("already exists"))
             {
-                return Problem("Entity set 'CustomerDbContext.ShippingTypes' is null.");
+                return Conflict(new { message = "A Shipping Type with this name already exists in SAP." });
             }
-
-            if (string.IsNullOrWhiteSpace(shippingType.Name))
-            {
-                ModelState.AddModelError("Name", "Shipping type name cannot be empty.");
-                return BadRequest(ModelState);
-            }
-
-            // Check if shipping type name already exists (case-insensitive)
-            bool typeExists = await _context.ShippingTypes.AnyAsync(st => st.Name.ToLower() == shippingType.Name.ToLower());
-            if (typeExists)
-            {
-                ModelState.AddModelError("Name", "Shipping type with this name already exists.");
-                return Conflict(ModelState); // HTTP 409 Conflict
-            }
-
-            _context.ShippingTypes.Add(shippingType);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetShippingType), new { id = shippingType.Id }, shippingType);
+            return StatusCode(500, $"SAP Service Layer error: {ex.Message}");
         }
-
-        // Optional: PUT for updating
-        // PUT: api/ShippingType/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutShippingType(int id, ShippingType shippingType)
+        catch (Exception ex)
         {
-            if (id != shippingType.Id)
-            {
-                return BadRequest("ShippingType ID mismatch.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var existingTypeWithSameName = await _context.ShippingTypes
-                .FirstOrDefaultAsync(st => st.Name.ToLower() == shippingType.Name.ToLower() && st.Id != id);
-
-            if (existingTypeWithSameName != null)
-            {
-                ModelState.AddModelError("Name", "Another shipping type with this name already exists.");
-                return Conflict(ModelState);
-            }
-
-            _context.Entry(shippingType).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ShippingTypeExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-            return NoContent();
-        }
-
-        // Optional: DELETE for deleting
-        // DELETE: api/ShippingType/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteShippingType(int id)
-        {
-            if (_context.ShippingTypes == null)
-            {
-                return NotFound("ShippingTypes DbSet is null.");
-            }
-            var shippingType = await _context.ShippingTypes.FindAsync(id);
-            if (shippingType == null)
-            {
-                return NotFound();
-            }
-
-            _context.ShippingTypes.Remove(shippingType);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ShippingTypeExists(int id)
-        {
-            return (_context.ShippingTypes?.Any(e => e.Id == id)).GetValueOrDefault();
+            _logger.LogError(ex, "An error occurred while creating a shipping type.");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 }

@@ -14,6 +14,10 @@ namespace backendDistributor.Models
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 
+        [Required]
+        [StringLength(50)]
+        public string Code { get; set; }
+
         [Required(ErrorMessage = "UOM Group name is required.")]
         [StringLength(100, ErrorMessage = "UOM Group name cannot be longer than 100 characters.")]
         public string Name { get; set; }
@@ -26,6 +30,7 @@ namespace backendDistributor.Models
         // Constructor to set the creation date automatically
         public UOMGroup()
         {
+            Code = string.Empty;
             Name = string.Empty; // Initialize to prevent null reference on Name
             CreatedDate = DateTime.UtcNow;
         }

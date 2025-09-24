@@ -364,7 +364,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 20
+              "default": 8
             }
           }
         ],
@@ -391,81 +391,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/Customer/{id}": {
-      "get": {
-        "tags": [
-          "Customer"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Customer"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": { }
-            },
-            "text/json": {
-              "schema": { }
-            },
-            "application/*+json": {
-              "schema": { }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Customer"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -558,44 +483,6 @@
       }
     },
     "/api/CustomerGroup/{id}": {
-      "get": {
-        "tags": [
-          "CustomerGroup"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomerGroup"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomerGroup"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CustomerGroup"
-                }
-              }
-            }
-          }
-        }
-      },
       "put": {
         "tags": [
           "CustomerGroup"
@@ -983,6 +870,90 @@
       }
     },
     "/api/Product": {
+      "post": {
+        "tags": [
+          "Product"
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "ProductGroup",
+                  "ProductName",
+                  "SKU",
+                  "UOM"
+                ],
+                "type": "object",
+                "properties": {
+                  "SKU": {
+                    "type": "string"
+                  },
+                  "ProductName": {
+                    "type": "string"
+                  },
+                  "ProductGroup": {
+                    "type": "string"
+                  },
+                  "UOM": {
+                    "type": "string"
+                  },
+                  "UOMGroup": {
+                    "type": "string"
+                  },
+                  "HSN": {
+                    "type": "string"
+                  },
+                  "RetailPrice": {
+                    "type": "string"
+                  },
+                  "WholesalePrice": {
+                    "type": "string"
+                  },
+                  "ProductImage": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              },
+              "encoding": {
+                "SKU": {
+                  "style": "form"
+                },
+                "ProductName": {
+                  "style": "form"
+                },
+                "ProductGroup": {
+                  "style": "form"
+                },
+                "UOM": {
+                  "style": "form"
+                },
+                "UOMGroup": {
+                  "style": "form"
+                },
+                "HSN": {
+                  "style": "form"
+                },
+                "RetailPrice": {
+                  "style": "form"
+                },
+                "WholesalePrice": {
+                  "style": "form"
+                },
+                "ProductImage": {
+                  "style": "form"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "get": {
         "tags": [
           "Product"
@@ -1010,138 +981,19 @@
               "text/plain": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
+                  "items": { }
                 }
               },
               "application/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
+                  "items": { }
                 }
               },
               "text/json": {
                 "schema": {
                   "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Product"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Product"
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "ProductGroup",
-                  "ProductName",
-                  "SKU",
-                  "UOM"
-                ],
-                "type": "object",
-                "properties": {
-                  "SKU": {
-                    "maxLength": 50,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "ProductName": {
-                    "maxLength": 250,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "ProductGroup": {
-                    "maxLength": 100,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "UOMGroup": {
-                    "maxLength": 50,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "UOM": {
-                    "maxLength": 50,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "HSN": {
-                    "maxLength": 20,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "RetailPrice": {
-                    "type": "string"
-                  },
-                  "WholesalePrice": {
-                    "type": "string"
-                  },
-                  "ProductImage": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "SKU": {
-                  "style": "form"
-                },
-                "ProductName": {
-                  "style": "form"
-                },
-                "ProductGroup": {
-                  "style": "form"
-                },
-                "UOMGroup": {
-                  "style": "form"
-                },
-                "UOM": {
-                  "style": "form"
-                },
-                "HSN": {
-                  "style": "form"
-                },
-                "RetailPrice": {
-                  "style": "form"
-                },
-                "WholesalePrice": {
-                  "style": "form"
-                },
-                "ProductImage": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Product"
+                  "items": { }
                 }
               }
             }
@@ -1188,6 +1040,27 @@
           }
         }
       },
+      "delete": {
+        "tags": [
+          "Product"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "put": {
         "tags": [
           "Product"
@@ -1216,33 +1089,21 @@
                 "type": "object",
                 "properties": {
                   "SKU": {
-                    "maxLength": 50,
-                    "minLength": 0,
                     "type": "string"
                   },
                   "ProductName": {
-                    "maxLength": 250,
-                    "minLength": 0,
                     "type": "string"
                   },
                   "ProductGroup": {
-                    "maxLength": 100,
-                    "minLength": 0,
-                    "type": "string"
-                  },
-                  "UOMGroup": {
-                    "maxLength": 50,
-                    "minLength": 0,
                     "type": "string"
                   },
                   "UOM": {
-                    "maxLength": 50,
-                    "minLength": 0,
+                    "type": "string"
+                  },
+                  "UOMGroup": {
                     "type": "string"
                   },
                   "HSN": {
-                    "maxLength": 20,
-                    "minLength": 0,
                     "type": "string"
                   },
                   "RetailPrice": {
@@ -1267,10 +1128,10 @@
                 "ProductGroup": {
                   "style": "form"
                 },
-                "UOMGroup": {
+                "UOM": {
                   "style": "form"
                 },
-                "UOM": {
+                "UOMGroup": {
                   "style": "form"
                 },
                 "HSN": {
@@ -1289,27 +1150,6 @@
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1402,84 +1242,6 @@
       }
     },
     "/api/ProductGroup/{id}": {
-      "get": {
-        "tags": [
-          "ProductGroup"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductGroup"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductGroup"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProductGroup"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "ProductGroup"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductGroup"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductGroup"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ProductGroup"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
       "delete": {
         "tags": [
           "ProductGroup"
@@ -1675,7 +1437,7 @@
         }
       }
     },
-    "/api/Routes": {
+    "/api/Route": {
       "get": {
         "tags": [
           "Routes"
@@ -1688,7 +1450,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Route"
+                    "$ref": "#/components/schemas/RouteNode"
                   }
                 }
               },
@@ -1696,7 +1458,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Route"
+                    "$ref": "#/components/schemas/RouteNode"
                   }
                 }
               },
@@ -1704,7 +1466,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/Route"
+                    "$ref": "#/components/schemas/RouteNode"
                   }
                 }
               }
@@ -1720,17 +1482,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             }
           }
@@ -1741,17 +1503,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/Route"
+                  "$ref": "#/components/schemas/RouteNode"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Route"
+                  "$ref": "#/components/schemas/RouteNode"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/Route"
+                  "$ref": "#/components/schemas/RouteNode"
                 }
               }
             }
@@ -1759,46 +1521,8 @@
         }
       }
     },
-    "/api/Routes/{id}": {
-      "get": {
-        "tags": [
-          "Routes"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Route"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Route"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Route"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
+    "/api/Route/{id}": {
+      "patch": {
         "tags": [
           "Routes"
         ],
@@ -1817,17 +1541,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/Route"
+                "$ref": "#/components/schemas/RouteNode"
               }
             }
           }
@@ -2329,84 +2053,6 @@
       }
     },
     "/api/ShippingType/{id}": {
-      "get": {
-        "tags": [
-          "ShippingType"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShippingType"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShippingType"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ShippingType"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "ShippingType"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShippingType"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShippingType"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/ShippingType"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
       "delete": {
         "tags": [
           "ShippingType"
@@ -2442,7 +2088,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaxDeclarationDto"
+                    "$ref": "#/components/schemas/TaxDeclaration"
                   }
                 }
               },
@@ -2450,7 +2096,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaxDeclarationDto"
+                    "$ref": "#/components/schemas/TaxDeclaration"
                   }
                 }
               },
@@ -2458,7 +2104,7 @@
                 "schema": {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/TaxDeclarationDto"
+                    "$ref": "#/components/schemas/TaxDeclaration"
                   }
                 }
               }
@@ -2474,17 +2120,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationCreateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationCreateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationCreateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             }
           }
@@ -2495,17 +2141,17 @@
             "content": {
               "text/plain": {
                 "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
+                  "$ref": "#/components/schemas/TaxDeclaration"
                 }
               },
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
+                  "$ref": "#/components/schemas/TaxDeclaration"
                 }
               },
               "text/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
+                  "$ref": "#/components/schemas/TaxDeclaration"
                 }
               }
             }
@@ -2514,44 +2160,6 @@
       }
     },
     "/api/TaxDeclarations/{id}": {
-      "get": {
-        "tags": [
-          "TaxDeclarations"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaxDeclarationDto"
-                }
-              }
-            }
-          }
-        }
-      },
       "put": {
         "tags": [
           "TaxDeclarations"
@@ -2571,17 +2179,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationUpdateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationUpdateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/TaxDeclarationUpdateDto"
+                "$ref": "#/components/schemas/TaxDeclaration"
               }
             }
           }
@@ -2591,19 +2199,20 @@
             "description": "OK"
           }
         }
-      },
+      }
+    },
+    "/api/TaxDeclarations/{taxCode}": {
       "delete": {
         "tags": [
           "TaxDeclarations"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "taxCode",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             }
           }
         ],
@@ -2699,84 +2308,6 @@
       }
     },
     "/api/UOMGroups/{id}": {
-      "get": {
-        "tags": [
-          "UOMGroups"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOMGroup"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOMGroup"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOMGroup"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "UOMGroups"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOMGroup"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOMGroup"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOMGroup"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
       "delete": {
         "tags": [
           "UOMGroups"
@@ -2884,84 +2415,6 @@
       }
     },
     "/api/UOMs/{id}": {
-      "get": {
-        "tags": [
-          "UOMs"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOM"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOM"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UOM"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "UOMs"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOM"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOM"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/UOM"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
       "delete": {
         "tags": [
           "UOMs"
@@ -3360,6 +2813,112 @@
             "schema": {
               "type": "integer",
               "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Warehouse": {
+      "get": {
+        "tags": [
+          "Warehouse"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Warehouse"
+                  }
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Warehouse"
+                  }
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Warehouse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Warehouse"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Warehouse"
+              }
+            },
+            "text/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Warehouse"
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "$ref": "#/components/schemas/Warehouse"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "$ref": "#/components/schemas/Warehouse"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Warehouse"
+                }
+              },
+              "text/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Warehouse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/Warehouse/{id}": {
+      "delete": {
+        "tags": [
+          "Warehouse"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -3858,10 +3417,7 @@
         },
         "additionalProperties": false
       },
-      "Route": {
-        "required": [
-          "name"
-        ],
+      "RouteNode": {
         "type": "object",
         "properties": {
           "id": {
@@ -3869,16 +3425,21 @@
             "format": "int32"
           },
           "name": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string"
+            "type": "string",
+            "nullable": true
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RouteNode"
+            },
+            "nullable": true
           }
         },
         "additionalProperties": false
       },
       "SalesEmployee": {
         "required": [
-          "code",
           "contactNumber",
           "name"
         ],
@@ -3891,30 +3452,13 @@
           "code": {
             "maxLength": 50,
             "minLength": 0,
-            "type": "string"
+            "type": "string",
+            "nullable": true
           },
           "name": {
             "maxLength": 150,
             "minLength": 0,
             "type": "string"
-          },
-          "jobTitle": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "position": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "department": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
           },
           "contactNumber": {
             "maxLength": 20,
@@ -3926,12 +3470,6 @@
             "minLength": 0,
             "type": "string",
             "format": "email",
-            "nullable": true
-          },
-          "address": {
-            "maxLength": 500,
-            "minLength": 0,
-            "type": "string",
             "nullable": true
           },
           "remarks": {
@@ -3998,7 +3536,7 @@
         },
         "additionalProperties": false
       },
-      "TaxDeclarationCreateDto": {
+      "TaxDeclaration": {
         "required": [
           "taxCode",
           "taxDescription",
@@ -4006,57 +3544,6 @@
           "validFrom",
           "validTo"
         ],
-        "type": "object",
-        "properties": {
-          "taxCode": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string"
-          },
-          "taxDescription": {
-            "maxLength": 255,
-            "minLength": 0,
-            "type": "string"
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "validTo": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "cgst": {
-            "maximum": 999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "sgst": {
-            "maximum": 999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "igst": {
-            "maximum": 999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalPercentage": {
-            "maximum": 999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "double"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TaxDeclarationDto": {
         "type": "object",
         "properties": {
           "id": {
@@ -4064,57 +3551,6 @@
             "format": "int32"
           },
           "taxCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "taxDescription": {
-            "type": "string",
-            "nullable": true
-          },
-          "validFrom": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "validTo": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "cgst": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "sgst": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "igst": {
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "totalPercentage": {
-            "type": "number",
-            "format": "double"
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "TaxDeclarationUpdateDto": {
-        "required": [
-          "taxCode",
-          "taxDescription",
-          "totalPercentage",
-          "validFrom",
-          "validTo"
-        ],
-        "type": "object",
-        "properties": {
-          "taxCode": {
             "maxLength": 50,
             "minLength": 0,
             "type": "string"
@@ -4133,29 +3569,16 @@
             "format": "date-time"
           },
           "cgst": {
-            "maximum": 999.99,
-            "minimum": 0,
             "type": "number",
             "format": "double",
             "nullable": true
           },
           "sgst": {
-            "maximum": 999.99,
-            "minimum": 0,
-            "type": "number",
-            "format": "double",
-            "nullable": true
-          },
-          "igst": {
-            "maximum": 999.99,
-            "minimum": 0,
             "type": "number",
             "format": "double",
             "nullable": true
           },
           "totalPercentage": {
-            "maximum": 999.99,
-            "minimum": 0,
             "type": "number",
             "format": "double"
           },
@@ -4185,6 +3608,7 @@
       },
       "UOMGroup": {
         "required": [
+          "code",
           "name"
         ],
         "type": "object",
@@ -4192,6 +3616,11 @@
           "id": {
             "type": "integer",
             "format": "int32"
+          },
+          "code": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
           },
           "name": {
             "maxLength": 100,

@@ -39,3 +39,4 @@ wwwroot\uploads\arinvoices\267562a7-ca11-42f4-8597-ebb0e033c513_b6.jpg
 wwwroot\uploads\arinvoices\bed08055-4dc0-4519-a01b-b7f295a53991_b5.jpg
 wwwroot\uploads\arinvoices\face2bf1-42e6-479b-8108-850e8d9f76f1_b7.jpg
 wwwroot\uploads\arinvoices\da28a54b-1071-4e8b-a066-aca0789d9654_b7.jpg
+wwwroot\images\products\f6aedb28-3020-460e-ba4a-b680b67f49ab.jpg

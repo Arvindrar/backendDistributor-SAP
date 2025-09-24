@@ -8,7 +8,6 @@ namespace backendDistributor.Models
         [Key]
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Employee Code is required.")]
         [StringLength(50, ErrorMessage = "Employee Code cannot be longer than 50 characters.")]
         public string Code { get; set; } = string.Empty;
 
@@ -16,14 +15,7 @@ namespace backendDistributor.Models
         [StringLength(150, ErrorMessage = "Employee Name cannot be longer than 150 characters.")]
         public string Name { get; set; } = string.Empty;
 
-        [StringLength(100)]
-        public string? JobTitle { get; set; }
-
-        [StringLength(100)]
-        public string? Position { get; set; }
-
-        [StringLength(100)]
-        public string? Department { get; set; }
+        
 
         [Required(ErrorMessage = "Contact Number is required.")]
         [StringLength(20, ErrorMessage = "Contact Number is too long.")] // Allows for country code like +91
@@ -42,8 +34,7 @@ namespace backendDistributor.Models
             set => _email = string.IsNullOrWhiteSpace(value) ? null : value;
         }
 
-        [StringLength(500)]
-        public string? Address { get; set; }
+      
 
         [StringLength(1000)]
         public string? Remarks { get; set; }

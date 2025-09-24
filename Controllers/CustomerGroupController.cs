@@ -1,147 +1,115 @@
-﻿// backendDistributor/Controllers/CustomerGroupController.cs
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+﻿// Controllers/CustomerGroupController.cs
+
 using backendDistributor.Models;
-using System.Linq;
-using System.Threading.Tasks;
+using backendDistributor.Services;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
+using System.Threading.Tasks;
+using System;
 
-namespace backendDistributor.Controllers
+[Route("api/[controller]")]
+[ApiController]
+public class CustomerGroupController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CustomerGroupController : ControllerBase
+    private readonly CustomerGroupService _customerGroupService;
+    private readonly ILogger<CustomerGroupController> _logger;
+
+    public CustomerGroupController(CustomerGroupService customerGroupService, ILogger<CustomerGroupController> logger)
     {
-        private readonly CustomerDbContext _context; // Use your existing DbContext
+        _customerGroupService = customerGroupService;
+        _logger = logger;
+    }
 
-        public CustomerGroupController(CustomerDbContext context)
+    // GET: api/CustomerGroup
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<CustomerGroup>>> GetCustomerGroups()
+    {
+        try
         {
-            _context = context;
+            var groups = await _customerGroupService.GetAllGroupsAsync();
+            return Ok(groups);
         }
-
-        // GET: api/CustomerGroup
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<CustomerGroup>>> GetCustomerGroups()
+        catch (Exception ex)
         {
-            if (_context.CustomerGroups == null)
-            {
-                return NotFound("CustomerGroups data store is not available.");
-            }
-            return await _context.CustomerGroups.OrderBy(cg => cg.Name).ToListAsync();
+            _logger.LogError(ex, "An error occurred while getting customer groups.");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
+    }
 
-        // GET: api/CustomerGroup/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<CustomerGroup>> GetCustomerGroup(int id)
+    // POST: api/CustomerGroup
+    [HttpPost]
+    public async Task<ActionResult<CustomerGroup>> PostCustomerGroup(CustomerGroup customerGroup)
+    {
+        try
         {
-            if (_context.CustomerGroups == null)
-            {
-                return NotFound();
-            }
-
-            var customerGroup = await _context.CustomerGroups.FindAsync(id);
-
-            if (customerGroup == null)
-            {
-                return NotFound($"CustomerGroup with ID {id} not found.");
-            }
-
-            return customerGroup;
+            var newGroup = await _customerGroupService.AddGroupAsync(customerGroup);
+            // Returns a 201 Created status with the new group
+            return CreatedAtAction(nameof(GetCustomerGroups), new { id = newGroup.Id }, newGroup);
         }
-
-        // POST: api/CustomerGroup
-        [HttpPost]
-        public async Task<ActionResult<CustomerGroup>> PostCustomerGroup(CustomerGroup customerGroup)
+        catch (InvalidOperationException ex) // For duplicate names
         {
-            if (_context.CustomerGroups == null)
-            {
-                return Problem("Entity set 'CustomerDbContext.CustomerGroups' is null.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Optional: Check if a group with the same name already exists
-            if (await _context.CustomerGroups.AnyAsync(cg => cg.Name.ToLower() == customerGroup.Name.ToLower()))
-            {
-                ModelState.AddModelError("Name", $"A customer group with the name '{customerGroup.Name}' already exists.");
-                return BadRequest(ModelState);
-            }
-
-            _context.CustomerGroups.Add(customerGroup);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetCustomerGroup), new { id = customerGroup.Id }, customerGroup);
+            return Conflict(ex.Message); // Returns a 409 Conflict
         }
-
-        // PUT: api/CustomerGroup/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCustomerGroup(int id, CustomerGroup customerGroup)
+        catch (NotSupportedException ex) // For blocked SAP operations
         {
-            if (id != customerGroup.Id)
-            {
-                return BadRequest("ID mismatch.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Optional: Check if changing name to one that already exists (excluding itself)
-            if (await _context.CustomerGroups.AnyAsync(cg => cg.Name.ToLower() == customerGroup.Name.ToLower() && cg.Id != id))
-            {
-                ModelState.AddModelError("Name", $"Another customer group with the name '{customerGroup.Name}' already exists.");
-                return BadRequest(ModelState);
-            }
-
-            _context.Entry(customerGroup).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CustomerGroupExists(id))
-                {
-                    return NotFound($"CustomerGroup with ID {id} not found.");
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent(); // Or return Ok(customerGroup);
+            return StatusCode(405, ex.Message); // Returns a 405 Method Not Allowed
         }
-
-        // DELETE: api/CustomerGroup/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCustomerGroup(int id)
+        catch (Exception ex)
         {
-            if (_context.CustomerGroups == null)
-            {
-                return NotFound();
-            }
-
-            var customerGroup = await _context.CustomerGroups.FindAsync(id);
-            if (customerGroup == null)
-            {
-                return NotFound($"CustomerGroup with ID {id} not found.");
-            }
-
-            _context.CustomerGroups.Remove(customerGroup);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            _logger.LogError(ex, "An error occurred while creating a customer group.");
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
+    }
 
-        private bool CustomerGroupExists(int id)
+    // PUT: api/CustomerGroup/5
+    [HttpPut("{id}")]
+    public async Task<IActionResult> PutCustomerGroup(int id, CustomerGroup customerGroup)
+    {
+        try
         {
-            return (_context.CustomerGroups?.Any(e => e.Id == id)).GetValueOrDefault();
+            await _customerGroupService.UpdateGroupAsync(id, customerGroup);
+            return NoContent(); // Returns a 204 No Content on success
+        }
+        catch (ArgumentException ex) // For ID mismatch
+        {
+            return BadRequest(ex.Message); // Returns a 400 Bad Request
+        }
+        catch (InvalidOperationException ex) // For duplicate names
+        {
+            return Conflict(ex.Message); // Returns a 409 Conflict
+        }
+        catch (NotSupportedException ex) // For blocked SAP operations
+        {
+            return StatusCode(405, ex.Message); // Returns a 405 Method Not Allowed
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while updating customer group {Id}.", id);
+            return StatusCode(500, $"Internal server error: {ex.Message}");
+        }
+    }
+
+    // DELETE: api/CustomerGroup/5
+    [HttpDelete("{id}")]
+    public async Task<IActionResult> DeleteCustomerGroup(int id)
+    {
+        try
+        {
+            await _customerGroupService.DeleteGroupAsync(id);
+            return NoContent(); // Returns a 204 No Content on success
+        }
+        catch (KeyNotFoundException ex)
+        {
+            return NotFound(ex.Message); // Returns 404 Not Found
+        }
+        catch (NotSupportedException ex) // For blocked SAP operations
+        {
+            return StatusCode(405, ex.Message); // Returns a 405 Method Not Allowed
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "An error occurred while deleting customer group {Id}.", id);
+            return StatusCode(500, $"Internal server error: {ex.Message}");
         }
     }
 }

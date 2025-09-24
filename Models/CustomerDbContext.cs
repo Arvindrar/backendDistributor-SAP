@@ -12,9 +12,12 @@ namespace backendDistributor.Models
         public DbSet<Vendor> Vendors { get; set; }
         public DbSet<VendorGroup> VendorGroups { get; set; }
         public DbSet<Customer> Customers { get; set; } // Note: Standard convention is Plural (Customers)
+        public DbSet<BPAddress> BPAddresses { get; set; }
         public DbSet<CustomerGroup> CustomerGroups { get; set; }
         public DbSet<Route> Routes { get; set; }
         public DbSet<SalesEmployee> SalesEmployees { get; set; }
+
+
         public DbSet<ShippingType> ShippingTypes { get; set; }
         public DbSet<TaxDeclaration> TaxDeclarations { get; set; }
 
@@ -53,8 +56,29 @@ namespace backendDistributor.Models
             base.OnModelCreating(modelBuilder);
 
 
-            // ✅ Fix table name explicitly
-            //modelBuilder.Entity<Customer>().ToTable("Customer");
+            modelBuilder.Entity<Customer>()
+            .HasIndex(c => c.CardCode)
+            .IsUnique();
+
+            // This sets up the one-to-many relationship
+            modelBuilder.Entity<Customer>()
+                .HasMany(c => c.BPAddresses)
+                .WithOne(a => a.Customer)
+                .HasForeignKey(a => a.BPCode)
+                .HasPrincipalKey(c => c.CardCode);
+
+            modelBuilder.Entity<UOMGroup>(entity =>
+            {
+                // 1. Explicitly define the Primary Key
+                entity.HasKey(e => e.Id);
+
+                // 2. Tell EF Core that the database will generate this value upon insertion.
+                //    This is the most critical part of the fix.
+                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+
+                // 3. (Good Practice) Add a unique index to the Code property to prevent duplicates.
+                entity.HasIndex(e => e.Code).IsUnique();
+            });
 
             modelBuilder.Entity<SalesOrderItem>(entity =>
             {
@@ -68,6 +92,10 @@ namespace backendDistributor.Models
                .HasOne(i => i.SalesOrder)
                .WithMany(o => o.SalesItems)
                .HasForeignKey(i => i.SalesOrderId);
+
+            modelBuilder.Entity<SalesEmployee>()
+           .HasIndex(e => e.Name)
+           .IsUnique();
 
             modelBuilder.Entity<SalesOrderNumberTracker>().HasData(
         new SalesOrderNumberTracker { Id = 1, LastUsedNumber = 1000000 }

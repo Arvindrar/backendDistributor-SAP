@@ -30,8 +30,6 @@ namespace backendDistributor.Models
         [Column(TypeName = "decimal(5, 2)")]
         public decimal? SGST { get; set; } // Nullable
 
-        [Column(TypeName = "decimal(5, 2)")]
-        public decimal? IGST { get; set; } // Nullable
 
         [Required]
         [Column(TypeName = "decimal(5, 2)")]

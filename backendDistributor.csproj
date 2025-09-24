@@ -7,18 +7,21 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Models\NewFolder\**" />
     <Compile Remove="NewFolder1\**" />
     <Compile Remove="NewFolder2\**" />
     <Compile Remove="NewFolder3\**" />
     <Compile Remove="NewFolder4\**" />
-    <Content Remove="NewFolder1\**" />
+    <Content Remove="Models\NewFolder\**" />    <Content Remove="NewFolder1\**" />
     <Content Remove="NewFolder2\**" />
     <Content Remove="NewFolder3\**" />
     <Content Remove="NewFolder4\**" />
+    <EmbeddedResource Remove="Models\NewFolder\**" />
     <EmbeddedResource Remove="NewFolder1\**" />
     <EmbeddedResource Remove="NewFolder2\**" />
     <EmbeddedResource Remove="NewFolder3\**" />
     <EmbeddedResource Remove="NewFolder4\**" />
+    <None Remove="Models\NewFolder\**" />
     <None Remove="NewFolder1\**" />
     <None Remove="NewFolder2\**" />
     <None Remove="NewFolder3\**" />
@@ -42,7 +45,7 @@
   <ItemGroup>
     <Folder Include="Controllers\NewFolder\" />
     <Folder Include="Migrations\" />
-    <Folder Include="Models\NewFolder\" />
+    <Folder Include="NewFolder\" />
   </ItemGroup>
 
 </Project>
