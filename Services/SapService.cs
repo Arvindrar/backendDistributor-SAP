@@ -936,11 +936,11 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
             var itemPrices = new List<object>();
             if (decimal.TryParse(productDto.RetailPrice, out var retailPrice))
             {
-                itemPrices.Add(new { PriceList = 1, Price = retailPrice });
+                itemPrices.Add(new { PriceList = 2, Price = retailPrice }); // Was 1
             }
             if (decimal.TryParse(productDto.WholesalePrice, out var wholesalePrice))
             {
-                itemPrices.Add(new { PriceList = 2, Price = wholesalePrice });
+                itemPrices.Add(new { PriceList = 1, Price = wholesalePrice }); // Was 2
             }
 
             var sapPayload = new
@@ -948,6 +948,7 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
                 ItemCode = productDto.SKU,
                 ItemName = productDto.ProductName,
                 ItemsGroupCode = itemsGroupCode.Value,
+                Picture = imageFileName,
                 PurchaseItem = "tYES",
                 SalesItem = "tYES",
                 InventoryItem = "tYES",
@@ -956,13 +957,7 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
                 SalesUnit = productDto.UOM,
                 PurchaseUnit = productDto.UOM,
                 U_HS_Code = productDto.HSN,
-                ItemPrices = itemPrices.Any() ? itemPrices : null,
-
-                // ========================================================================
-                // THE FIX (Part 2): Add the 'Picture' property to the payload.
-                // It will be the unique filename we passed in.
-                // ========================================================================
-                Picture = imageFileName
+                ItemPrices = itemPrices.Any() ? itemPrices : null
             };
 
             // ... (The rest of the method for sending the request remains the same) ...

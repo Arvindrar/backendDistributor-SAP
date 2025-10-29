@@ -251,3 +251,7 @@ D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\ob
 D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\backendDistributor.genruntimeconfig.cache
 D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\ref\backendDistributor.dll
 D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\staticwebassets.upToDateCheck.txt
+D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\rpswa.dswa.cache.json
+D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\rjimswa.dswa.cache.json
+D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\rjsmrazor.dswa.cache.json
+D:\REACT-PROJECTS\vedhasoft-distributor\backendDistributor\backendDistributor\obj\Debug\net8.0\rjsmcshtml.dswa.cache.json

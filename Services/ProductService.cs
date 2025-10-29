@@ -41,6 +41,33 @@ namespace backendDistributor.Services
 
                 string? groupCode = null; // Add your group lookup logic here if needed
 
+                if (!string.IsNullOrEmpty(groupName) && !groupName.Equals("All Groups", StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogInformation("--> Searching for group code for group name: {GroupName}", groupName);
+                    // Fetch all product groups from SAP.
+                    var groupsJson = await _sapService.GetProductGroupsAsync();
+                    using var groupsDoc = JsonDocument.Parse(groupsJson);
+
+                    if (groupsDoc.RootElement.TryGetProperty("value", out var groupsElement))
+                    {
+                        // Find the group that matches the name (case-insensitive).
+                        var foundGroup = groupsElement.EnumerateArray()
+                            .FirstOrDefault(g =>
+                                g.TryGetProperty("GroupName", out var nameElement) &&
+                                nameElement.GetString()?.Equals(groupName, StringComparison.OrdinalIgnoreCase) == true);
+
+                        // If we found a match, get its numeric code.
+                        if (foundGroup.ValueKind != JsonValueKind.Undefined && foundGroup.TryGetProperty("Number", out var numberElement))
+                        {
+                            groupCode = numberElement.GetInt32().ToString();
+                            _logger.LogInformation("--> Found group code '{GroupCode}' for group name '{GroupName}'", groupCode, groupName);
+                        }
+                        else
+                        {
+                            _logger.LogWarning("--> Could not find a group code for group name: {GroupName}", groupName);
+                        }
+                    }
+                }
                 // STEP 1: Get the list of all products WITH prices included.
                 var sapJsonResult = await _sapService.GetProductsAsync(groupCode, searchTerm);
                 using var jsonDoc = JsonDocument.Parse(sapJsonResult);
@@ -57,19 +84,25 @@ namespace backendDistributor.Services
                 // ===================================================================================
                 foreach (var item in sapItemsElement.EnumerateArray())
                 {
-                    // Helper function to find a price in the now-included ItemPrices array
+                    // ===================================================================================
+                    // THE FIX IS HERE: This helper function is now robust against null price values.
+                    // ===================================================================================
                     decimal? GetPrice(int priceListId)
                     {
                         if (item.TryGetProperty("ItemPrices", out var pricesElement))
                         {
                             var priceObj = pricesElement.EnumerateArray().FirstOrDefault(p => p.GetProperty("PriceList").GetInt32() == priceListId);
-                            if (priceObj.ValueKind != JsonValueKind.Undefined && priceObj.TryGetProperty("Price", out var priceProp))
+                            // Check if the "Price" property exists AND its value is NOT null before trying to read it.
+                            if (priceObj.ValueKind != JsonValueKind.Undefined &&
+                                priceObj.TryGetProperty("Price", out var priceProp) &&
+                                priceProp.ValueKind != JsonValueKind.Null)
                             {
                                 return priceProp.GetDecimal();
                             }
                         }
                         return null;
                     }
+
 
                     var product = new Product
                     {
@@ -105,8 +138,26 @@ namespace backendDistributor.Services
                 string? uniqueFileName = null; // Your image saving logic...
                 if (productDto.ProductImage != null && productDto.ProductImage.Length > 0)
                 {
-                    // ... (your existing image saving code)
+                    // Define the path to the uploads folder
+                    var uploadsFolderPath = Path.Combine(_hostingEnvironment.WebRootPath, "images", "products");
+                    // Create the directory if it doesn't exist
+                    if (!Directory.Exists(uploadsFolderPath))
+                    {
+                        Directory.CreateDirectory(uploadsFolderPath);
+                    }
+
+                    // Generate a unique file name to prevent overwriting existing files
+                    uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(productDto.ProductImage.FileName);
+                    var filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
+
+                    // Save the file to the server
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await productDto.ProductImage.CopyToAsync(stream);
+                    }
+                    _logger.LogInformation("--> Successfully saved product image as {FileName}", uniqueFileName);
                 }
+
 
                 var sapResponseJson = await _sapService.CreateProductAsync(productDto, uniqueFileName);
 
@@ -121,7 +172,9 @@ namespace backendDistributor.Services
                     if (root.TryGetProperty("ItemPrices", out var pricesElement))
                     {
                         var priceObj = pricesElement.EnumerateArray().FirstOrDefault(p => p.GetProperty("PriceList").GetInt32() == priceListId);
-                        if (priceObj.ValueKind != JsonValueKind.Undefined && priceObj.TryGetProperty("Price", out var priceProp))
+                        if (priceObj.ValueKind != JsonValueKind.Undefined &&
+                            priceObj.TryGetProperty("Price", out var priceProp) &&
+                            priceProp.ValueKind != JsonValueKind.Null)
                         {
                             return priceProp.GetDecimal();
                         }
