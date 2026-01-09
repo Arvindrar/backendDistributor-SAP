@@ -1,11 +1,9 @@
-﻿// backendDistributor/Controllers/VendorController.cs
-using Microsoft.AspNetCore.Http;
+﻿// REPLACE THE ENTIRE CONTENT of Controllers/VendorController.cs with this code
+
+using backendDistributor.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using backendDistributor.Models;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Net;
+using System.Text.Json;
 
 namespace backendDistributor.Controllers
 {
@@ -13,240 +11,109 @@ namespace backendDistributor.Controllers
     [ApiController]
     public class VendorController : ControllerBase
     {
-        private readonly CustomerDbContext _context;
+        private readonly VendorService _vendorService;
+        private readonly ILogger<VendorController> _logger;
 
-        public VendorController(CustomerDbContext context)
+        public VendorController(VendorService vendorService, ILogger<VendorController> logger)
         {
-            _context = context;
+            _vendorService = vendorService;
+            _logger = logger;
         }
 
-        // GET: api/Vendor
+        // GET: api/Vendor (List view)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Vendor>>> GetVendors(
-            [FromQuery] string? group,      // Filter by Vendor Group name
-            [FromQuery] string? searchTerm) // Search by Name or Code
+        public async Task<IActionResult> GetVendors(
+            [FromQuery] string? group,
+            [FromQuery] string? searchTerm,
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 8)
         {
-            if (_context.Vendors == null)
+            try
             {
-                return NotFound(new ProblemDetails { Title = "Vendor data store is not available.", Status = StatusCodes.Status404NotFound });
+                var sapJsonResult = await _vendorService.GetAllAsync(group, searchTerm, pageNumber, pageSize);
+                return Content(sapJsonResult, "application/json");
             }
-
-            var query = _context.Vendors.AsQueryable();
-
-            if (!string.IsNullOrEmpty(group))
+            catch (Exception ex)
             {
-                query = query.Where(v => v.Group != null && v.Group.ToLower() == group.ToLower());
+                _logger.LogError(ex, "Failed to get vendors.");
+                return StatusCode(500, new { message = "An internal server error occurred while fetching vendors." });
             }
-
-            if (!string.IsNullOrEmpty(searchTerm))
-            {
-                var term = searchTerm.ToLower();
-                query = query.Where(v =>
-                    (v.Name != null && v.Name.ToLower().Contains(term)) ||
-                    (v.Code != null && v.Code.ToLower().Contains(term))
-                );
-            }
-
-            return await query.OrderBy(v => v.Name).ToListAsync();
         }
 
-        // GET: api/Vendor/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Vendor>> GetVendor(int id)
+        [HttpGet("{cardCode}")]
+        public async Task<IActionResult> GetVendor(string cardCode)
         {
-            if (_context.Vendors == null)
+            try
             {
-                return NotFound(new ProblemDetails { Title = "Vendor data store is not available.", Status = StatusCodes.Status404NotFound });
+                var vendor = await _vendorService.GetByCardCodeAsync(cardCode);
+                if (vendor == null)
+                {
+                    return NotFound(new { message = $"Vendor with CardCode '{cardCode}' not found." });
+                }
+                return Ok(vendor);
             }
-
-            var vendor = await _context.Vendors.FindAsync(id);
-
-            if (vendor == null)
+            catch (Exception ex)
             {
-                return NotFound(new ProblemDetails { Title = $"Vendor with ID {id} not found.", Status = StatusCodes.Status404NotFound });
+                _logger.LogError(ex, "Error getting vendor by CardCode {CardCode}", cardCode);
+                return StatusCode(500, new { message = "An internal server error occurred." });
             }
-
-            return vendor;
         }
 
-        // POST: api/Vendor
+        // POST: api/Vendor (Create new vendor)
         [HttpPost]
-        public async Task<ActionResult<Vendor>> PostVendor(Vendor vendor)
+        public async Task<IActionResult> CreateVendor([FromBody] JsonElement vendorData)
         {
-            if (_context.Vendors == null)
+            _logger.LogInformation("--- RECEIVED VENDOR PAYLOAD FROM FRONTEND ---\n{Payload}\n---------------------------------", vendorData.ToString());
+
+            if (vendorData.ValueKind == JsonValueKind.Undefined)
             {
-                return Problem("Entity set 'CustomerDbContext.Vendors' is null.", statusCode: StatusCodes.Status500InternalServerError);
-            }
-
-            // 1. ModelState validation (from Data Annotations on Vendor model)
-            if (!ModelState.IsValid)
-            {
-                return ValidationProblem(ModelState);
-            }
-
-            // 2. Custom Business Logic Validation: Check if vendor code already exists
-            if (await _context.Vendors.AnyAsync(v => v.Code == vendor.Code))
-            {
-                ModelState.AddModelError(nameof(Vendor.Code), "This Vendor Code already exists.");
-                return ValidationProblem(ModelState);
-            }
-
-            // 3. Optional: Validate if the 'Group' name exists in the VendorGroup table
-            // This assumes you have a DbSet<VendorGroup> VendorGroups in your CustomerDbContext
-            // and VendorGroup has a 'Name' property.
-            if (!string.IsNullOrEmpty(vendor.Group))
-            {
-                if (_context.VendorGroups == null) // Defensive check
-                {
-                    ModelState.AddModelError(nameof(Vendor.Group), "VendorGroup data store is not available for validation.");
-                    return ValidationProblem(ModelState);
-                }
-                bool groupIsValid = await _context.VendorGroups.AnyAsync(g => g.Name == vendor.Group);
-                if (!groupIsValid)
-                {
-                    ModelState.AddModelError(nameof(Vendor.Group), $"Vendor group '{vendor.Group}' is not valid or does not exist.");
-                    return ValidationProblem(ModelState);
-                }
-            }
-
-            // 4. Optional: Validate ShippingType against a ShippingTypes table if it's not free text
-            // if (!string.IsNullOrEmpty(vendor.ShippingType))
-            // {
-            //     // Assuming you have a DbSet<ShippingType> ShippingTypes in your CustomerDbContext
-            //     // and ShippingType has a 'Name' property.
-            //     if (_context.ShippingTypes == null)
-            //     {
-            //         ModelState.AddModelError(nameof(Vendor.ShippingType), "ShippingType data store is not available for validation.");
-            //         return ValidationProblem(ModelState);
-            //     }
-            //     bool shippingTypeIsValid = await _context.ShippingTypes.AnyAsync(st => st.Name == vendor.ShippingType);
-            //     if (!shippingTypeIsValid)
-            //     {
-            //         ModelState.AddModelError(nameof(Vendor.ShippingType), $"Shipping Type '{vendor.ShippingType}' is not valid or does not exist.");
-            //         return ValidationProblem(ModelState);
-            //     }
-            // }
-
-
-            _context.Vendors.Add(vendor);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetVendor), new { id = vendor.Id }, vendor);
-        }
-
-        // PUT: api/Vendor/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVendor(int id, Vendor vendor)
-        {
-            if (id != vendor.Id)
-            {
-                ModelState.AddModelError("IdMismatch", "The ID in the URL does not match the ID in the request body.");
-                return ValidationProblem(ModelState);
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return ValidationProblem(ModelState);
-            }
-
-            // Custom Business Logic Validation:
-            // Check if changing code to one that already exists (excluding itself)
-            if (await _context.Vendors.AnyAsync(v => v.Code == vendor.Code && v.Id != id))
-            {
-                ModelState.AddModelError(nameof(Vendor.Code), "This Vendor Code already exists for another vendor.");
-                return ValidationProblem(ModelState);
-            }
-
-            // Optional: Validate 'Group' name
-            if (!string.IsNullOrEmpty(vendor.Group))
-            {
-                if (_context.VendorGroups == null)
-                {
-                    ModelState.AddModelError(nameof(Vendor.Group), "VendorGroup data store is not available for validation.");
-                    return ValidationProblem(ModelState);
-                }
-                bool groupIsValid = await _context.VendorGroups.AnyAsync(g => g.Name == vendor.Group);
-                if (!groupIsValid)
-                {
-                    ModelState.AddModelError(nameof(Vendor.Group), $"Vendor group '{vendor.Group}' is not valid or does not exist.");
-                    return ValidationProblem(ModelState);
-                }
-            }
-
-            // Optional: Validate 'ShippingType'
-            // if (!string.IsNullOrEmpty(vendor.ShippingType))
-            // {
-            //      if (_context.ShippingTypes == null)
-            //     {
-            //         ModelState.AddModelError(nameof(Vendor.ShippingType), "ShippingType data store is not available for validation.");
-            //         return ValidationProblem(ModelState);
-            //     }
-            //     bool shippingTypeIsValid = await _context.ShippingTypes.AnyAsync(st => st.Name == vendor.ShippingType);
-            //     if (!shippingTypeIsValid)
-            //     {
-            //         ModelState.AddModelError(nameof(Vendor.ShippingType), $"Shipping Type '{vendor.ShippingType}' is not valid or does not exist.");
-            //         return ValidationProblem(ModelState);
-            //     }
-            // }
-
-            _context.Entry(vendor).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!VendorExists(id))
-                {
-                    return NotFound(new ProblemDetails { Title = $"Vendor with ID {id} not found while trying to update.", Status = StatusCodes.Status404NotFound });
-                }
-                else
-                {
-                    ModelState.AddModelError("Concurrency", "The vendor record was modified by another user. Please refresh and try again.");
-                    return Conflict(ValidationProblem(ModelState));
-                }
-            }
-            catch (DbUpdateException ex)
-            {
-                return Problem($"An error occurred while updating the database: {ex.InnerException?.Message ?? ex.Message}", statusCode: StatusCodes.Status500InternalServerError);
-            }
-
-            return Ok(new { message = "Vendor updated successfully." });
-        }
-
-        // DELETE: api/Vendor/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteVendor(int id)
-        {
-            if (_context.Vendors == null)
-            {
-                return NotFound(new ProblemDetails { Title = "Vendor data store is not available.", Status = StatusCodes.Status404NotFound });
-            }
-
-            var vendor = await _context.Vendors.FindAsync(id);
-            if (vendor == null)
-            {
-                return NotFound(new ProblemDetails { Title = $"Vendor with ID {id} not found.", Status = StatusCodes.Status404NotFound });
+                return BadRequest(new { message = "Request body cannot be empty." });
             }
 
             try
             {
-                _context.Vendors.Remove(vendor);
-                await _context.SaveChangesAsync();
+                var createdVendor = await _vendorService.AddAsync(vendorData);
+                return StatusCode((int)HttpStatusCode.Created, createdVendor);
             }
-            catch (DbUpdateException ex)
+            catch (HttpRequestException httpEx) // Catch specific SAP errors
             {
-                ModelState.AddModelError("DeleteError", $"Could not delete vendor. They might be associated with other records. Details: {ex.InnerException?.Message ?? ex.Message}");
-                return Conflict(ValidationProblem(ModelState));
+                _logger.LogError(httpEx, "SAP Service Layer returned an error during vendor creation.");
+                object? errorDetails = httpEx.Message;
+                try { errorDetails = JsonSerializer.Deserialize<object>(httpEx.Message); } catch { }
+                return StatusCode((int)(httpEx.StatusCode ?? HttpStatusCode.BadGateway), errorDetails);
             }
-
-            return Ok(new { message = "Vendor deleted successfully." });
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while creating a vendor.");
+                return StatusCode(500, new { message = $"An internal server error occurred: {ex.Message}" });
+            }
         }
 
-        private bool VendorExists(int id)
+        // PUT: api/Vendor/V123 (Update existing vendor)
+        [HttpPut("{cardCode}")]
+        public async Task<IActionResult> UpdateVendor(string cardCode, [FromBody] JsonElement vendorData)
         {
-            return (_context.Vendors?.Any(e => e.Id == id)).GetValueOrDefault();
+            if (string.IsNullOrEmpty(cardCode))
+            {
+                return BadRequest(new { message = "Vendor CardCode is required for an update." });
+            }
+            try
+            {
+                await _vendorService.UpdateAsync(cardCode, vendorData);
+                return NoContent(); // 204 is standard for a successful update
+            }
+            catch (HttpRequestException httpEx)
+            {
+                _logger.LogError(httpEx, "SAP Service Layer returned an error during vendor update.");
+                object? errorDetails = httpEx.Message;
+                try { errorDetails = JsonSerializer.Deserialize<object>(httpEx.Message); } catch { }
+                return StatusCode((int)(httpEx.StatusCode ?? HttpStatusCode.BadGateway), errorDetails);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "An error occurred while updating a vendor.");
+                return StatusCode(500, new { message = $"An internal server error occurred: {ex.Message}" });
+            }
         }
     }
 }

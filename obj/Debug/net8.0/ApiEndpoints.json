@@ -215,53 +215,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "backendDistributor.Controllers.CustomerController",
-    "Method": "GetCustomers",
-    "RelativePath": "api/Customer",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "group",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "searchTerm",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "pageNumber",
-        "Type": "System.Int32",
-        "IsRequired": false
-      },
-      {
-        "Name": "pageSize",
-        "Type": "System.Int32",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.CustomerController",
-    "Method": "CreateCustomer",
-    "RelativePath": "api/Customer",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "customerData",
-        "Type": "System.Text.Json.JsonElement",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "CustomerGroupController",
     "Method": "GetCustomerGroups",
     "RelativePath": "api/CustomerGroup",
@@ -339,6 +292,69 @@
       {
         "Name": "id",
         "Type": "System.Int32",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.CustomerController",
+    "Method": "GetCustomers",
+    "RelativePath": "api/Customers",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "group",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "searchTerm",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.CustomerController",
+    "Method": "CreateCustomer",
+    "RelativePath": "api/Customers",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "customerData",
+        "Type": "System.Text.Json.JsonElement",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.CustomerController",
+    "Method": "GetCustomer",
+    "RelativePath": "api/Customers/{id}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "id",
+        "Type": "System.String",
         "IsRequired": true
       }
     ],
@@ -560,196 +576,6 @@
     "ReturnTypes": []
   },
   {
-    "ContainingType": "backendDistributor.Controllers.ProductController",
-    "Method": "PostProduct",
-    "RelativePath": "api/Product",
-    "HttpMethod": "POST",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "SKU",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductName",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductGroup",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UOM",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UOMGroup",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "HSN",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "RetailPrice",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "WholesalePrice",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductImage",
-        "Type": "Microsoft.AspNetCore.Http.IFormFile",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.ProductController",
-    "Method": "GetProducts",
-    "RelativePath": "api/Product",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "group",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "searchTerm",
-        "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.ProductController",
-    "Method": "GetProduct",
-    "RelativePath": "api/Product/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "backendDistributor.Models.Product",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.ProductController",
-    "Method": "DeleteProduct",
-    "RelativePath": "api/Product/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.ProductController",
-    "Method": "PutProduct",
-    "RelativePath": "api/Product/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "SKU",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductName",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductGroup",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UOM",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UOMGroup",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "HSN",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "RetailPrice",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "WholesalePrice",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "ProductImage",
-        "Type": "Microsoft.AspNetCore.Http.IFormFile",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
     "ContainingType": "backendDistributor.Controllers.ProductGroupController",
     "Method": "GetProductGroups",
     "RelativePath": "api/ProductGroup",
@@ -810,6 +636,119 @@
       }
     ],
     "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.ProductController",
+    "Method": "PostProduct",
+    "RelativePath": "api/Products",
+    "HttpMethod": "POST",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "SKU",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ProductName",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ProductGroup",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "UOM",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "UOMGroup",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "HSN",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "RetailPrice",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "WholesalePrice",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "ProductImage",
+        "Type": "Microsoft.AspNetCore.Http.IFormFile",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.ProductController",
+    "Method": "GetProducts",
+    "RelativePath": "api/Products",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "group",
+        "Type": "System.String",
+        "IsRequired": false
+      },
+      {
+        "Name": "searchTerm",
+        "Type": "System.String",
+        "IsRequired": false
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Collections.Generic.IEnumerable\u00601[[System.Object, System.Private.CoreLib, Version=8.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.ProductController",
+    "Method": "GetProductBySku",
+    "RelativePath": "api/Products/{sku}",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "sku",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "backendDistributor.Models.Product",
+        "MediaTypes": [
+          "text/plain",
+          "application/json",
+          "text/json"
+        ],
+        "StatusCode": 200
+      }
+    ]
   },
   {
     "ContainingType": "backendDistributor.Controllers.PurchaseOrdersController",
@@ -1033,8 +972,8 @@
     "Order": 0,
     "Parameters": [
       {
-        "Name": "salesEmployee",
-        "Type": "backendDistributor.Models.SalesEmployee",
+        "Name": "dto",
+        "Type": "backendDistributor.Dtos.SalesEmployeeCreateDto",
         "IsRequired": true
       }
     ],
@@ -1115,119 +1054,62 @@
   },
   {
     "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
-    "Method": "Create",
+    "Method": "GetSalesOrders",
+    "RelativePath": "api/SalesOrders",
+    "HttpMethod": "GET",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
+    "Method": "CreateSalesOrder",
     "RelativePath": "api/SalesOrders",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "Payload",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UploadedFiles",
-        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "FilesToDeleteJson",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "payload",
+        "Type": "System.Text.Json.JsonElement",
+        "IsRequired": true
       }
     ],
     "ReturnTypes": []
   },
   {
     "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
-    "Method": "GetSalesOrders",
-    "RelativePath": "api/SalesOrders",
+    "Method": "GetSalesOrder",
+    "RelativePath": "api/SalesOrders/{docEntry}",
     "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "salesOrderNo",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "customerName",
-        "Type": "System.String",
-        "IsRequired": false
+        "Name": "docEntry",
+        "Type": "System.Int32",
+        "IsRequired": true
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[backendDistributor.Models.DTOs.SalesOrderListDto, backendDistributor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
-    "Method": "Update",
-    "RelativePath": "api/SalesOrders/{id}",
+    "Method": "UpdateSalesOrder",
+    "RelativePath": "api/SalesOrders/{docEntry}",
     "HttpMethod": "PUT",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
-        "Type": "System.Guid",
+        "Name": "docEntry",
+        "Type": "System.Int32",
         "IsRequired": true
       },
       {
-        "Name": "Payload",
-        "Type": "System.String",
-        "IsRequired": false
-      },
-      {
-        "Name": "UploadedFiles",
-        "Type": "System.Collections.Generic.List\u00601[[Microsoft.AspNetCore.Http.IFormFile, Microsoft.AspNetCore.Http.Features, Version=8.0.0.0, Culture=neutral, PublicKeyToken=adb9793829ddae60]]",
-        "IsRequired": false
-      },
-      {
-        "Name": "FilesToDeleteJson",
-        "Type": "System.String",
-        "IsRequired": false
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
-    "Method": "GetById",
-    "RelativePath": "api/SalesOrders/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": []
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.SalesOrdersController",
-    "Method": "Delete",
-    "RelativePath": "api/SalesOrders/{id}",
-    "HttpMethod": "DELETE",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Guid",
+        "Name": "payload",
+        "Type": "System.Text.Json.JsonElement",
         "IsRequired": true
       }
     ],
@@ -1519,88 +1401,31 @@
         "Name": "searchTerm",
         "Type": "System.String",
         "IsRequired": false
+      },
+      {
+        "Name": "pageNumber",
+        "Type": "System.Int32",
+        "IsRequired": false
+      },
+      {
+        "Name": "pageSize",
+        "Type": "System.Int32",
+        "IsRequired": false
       }
     ],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[backendDistributor.Models.Vendor, backendDistributor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "backendDistributor.Controllers.VendorController",
-    "Method": "PostVendor",
+    "Method": "CreateVendor",
     "RelativePath": "api/Vendor",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "vendor",
-        "Type": "backendDistributor.Models.Vendor",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "backendDistributor.Models.Vendor",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.VendorController",
-    "Method": "GetVendor",
-    "RelativePath": "api/Vendor/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "backendDistributor.Models.Vendor",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.VendorController",
-    "Method": "PutVendor",
-    "RelativePath": "api/Vendor/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "vendor",
-        "Type": "backendDistributor.Models.Vendor",
+        "Name": "vendorData",
+        "Type": "System.Text.Json.JsonElement",
         "IsRequired": true
       }
     ],
@@ -1608,15 +1433,36 @@
   },
   {
     "ContainingType": "backendDistributor.Controllers.VendorController",
-    "Method": "DeleteVendor",
-    "RelativePath": "api/Vendor/{id}",
-    "HttpMethod": "DELETE",
+    "Method": "GetVendor",
+    "RelativePath": "api/Vendor/{cardCode}",
+    "HttpMethod": "GET",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "id",
-        "Type": "System.Int32",
+        "Name": "cardCode",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": []
+  },
+  {
+    "ContainingType": "backendDistributor.Controllers.VendorController",
+    "Method": "UpdateVendor",
+    "RelativePath": "api/Vendor/{cardCode}",
+    "HttpMethod": "PUT",
+    "IsController": true,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "cardCode",
+        "Type": "System.String",
+        "IsRequired": true
+      },
+      {
+        "Name": "vendorData",
+        "Type": "System.Text.Json.JsonElement",
         "IsRequired": true
       }
     ],
@@ -1630,86 +1476,19 @@
     "IsController": true,
     "Order": 0,
     "Parameters": [],
-    "ReturnTypes": [
-      {
-        "Type": "System.Collections.Generic.IEnumerable\u00601[[backendDistributor.Models.VendorGroup, backendDistributor, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null]]",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
+    "ReturnTypes": []
   },
   {
     "ContainingType": "backendDistributor.Controllers.VendorGroupController",
-    "Method": "PostVendorGroup",
+    "Method": "CreateVendorGroup",
     "RelativePath": "api/VendorGroup",
     "HttpMethod": "POST",
     "IsController": true,
     "Order": 0,
     "Parameters": [
       {
-        "Name": "vendorGroup",
-        "Type": "backendDistributor.Models.VendorGroup",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "backendDistributor.Models.VendorGroup",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.VendorGroupController",
-    "Method": "GetVendorGroup",
-    "RelativePath": "api/VendorGroup/{id}",
-    "HttpMethod": "GET",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      }
-    ],
-    "ReturnTypes": [
-      {
-        "Type": "backendDistributor.Models.VendorGroup",
-        "MediaTypes": [
-          "text/plain",
-          "application/json",
-          "text/json"
-        ],
-        "StatusCode": 200
-      }
-    ]
-  },
-  {
-    "ContainingType": "backendDistributor.Controllers.VendorGroupController",
-    "Method": "PutVendorGroup",
-    "RelativePath": "api/VendorGroup/{id}",
-    "HttpMethod": "PUT",
-    "IsController": true,
-    "Order": 0,
-    "Parameters": [
-      {
-        "Name": "id",
-        "Type": "System.Int32",
-        "IsRequired": true
-      },
-      {
-        "Name": "vendorGroup",
-        "Type": "backendDistributor.Models.VendorGroup",
+        "Name": "groupData",
+        "Type": "System.Text.Json.Nodes.JsonNode",
         "IsRequired": true
       }
     ],

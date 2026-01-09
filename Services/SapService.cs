@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using System.Data.Common;
 using System.Drawing.Printing;
 using System.Net;
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
@@ -336,21 +337,20 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
         }
 
 
-        public async Task<string> CreateBusinessPartnerGroupAsync(CustomerGroup group)
+        public async Task<string> CreateBusinessPartnerGroupAsync(CustomerGroup group, string groupType = "bbpgt_CustomerGroup")
         {
             await EnsureLoginAsync();
 
             // SAP expects a specific JSON format.
-            // We must specify the 'Type' as 'bbpgt_CustomerGroup'.
             var sapPayload = new
             {
                 Name = group.Name,
-                Type = "bbpgt_CustomerGroup"
+                Type = groupType // Now we can specify Customer or Vendor type
             };
 
             var content = new StringContent(JsonSerializer.Serialize(sapPayload), System.Text.Encoding.UTF8, "application/json");
 
-            _logger.LogInformation("Attempting to create SAP Business Partner Group with name: {Name}", group.Name);
+            _logger.LogInformation("Attempting to create SAP Business Partner Group with name: {Name} and type: {Type}", group.Name, groupType);
 
             var response = await _httpClient.PostAsync("BusinessPartnerGroups", content);
 
@@ -361,7 +361,6 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
                 throw new HttpRequestException(errorContent, null, response.StatusCode);
             }
 
-            // Return the response from SAP, which will include the newly created group with its ID.
             return await response.Content.ReadAsStringAsync();
         }
 
@@ -435,15 +434,9 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
             }
         }
 
-        public async Task<string> GetSalesEmployeesAsync()
-        {
-            await EnsureLoginAsync();
-            var requestUrl = "SalesPersons?$select=SalesEmployeeCode,SalesEmployeeName&$filter=Active eq 'tYES'";
+        // Find this method in your Services/SapService.cs file
 
-            var response = await _httpClient.GetAsync(requestUrl);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
-        }
+        
         public async Task<string> GetEmployeeInfoByIdAsync(int employeeID)
         {
             await EnsureLoginAsync();
@@ -453,39 +446,115 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
             return await response.Content.ReadAsStringAsync();
         }
 
-        public async Task<string> GetSalesEmployeeByIdAsync(int salesEmployeeCode)
+        public async Task<string> GetSalesEmployeesAsync()
         {
             await EnsureLoginAsync();
-            var requestUrl = $"SalesPersons({salesEmployeeCode})";
-            var response = await _httpClient.GetAsync(requestUrl);
-            response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("Fetching ALL Sales Employees from SAP, handling pagination.");
+
+            var allEmployeeElements = new List<JsonElement>();
+            var fields = "SalesEmployeeCode,SalesEmployeeName,Mobile,Email,Remarks,Active";
+
+            // The initial request URL for the first page
+            string? nextLink = $"SalesPersons?$select={fields}";
+
+            // Loop as long as SAP provides a "nextLink" for the next page of data
+            while (!string.IsNullOrEmpty(nextLink))
+            {
+                _logger.LogInformation("Fetching Sales Employees page: {PageUrl}", nextLink);
+                var response = await _httpClient.GetAsync(nextLink);
+
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _logger.LogWarning("SAP session expired. Attempting re-login and retry for page: {PageUrl}", nextLink);
+                    await LoginAsync();
+                    response = await _httpClient.GetAsync(nextLink);
+                }
+
+                response.EnsureSuccessStatusCode();
+                var pageContent = await response.Content.ReadAsStringAsync();
+
+                using (var jsonDoc = JsonDocument.Parse(pageContent))
+                {
+                    var root = jsonDoc.RootElement;
+
+                    // Get the 'value' array which contains the items for the current page
+                    if (root.TryGetProperty("value", out var valueElement))
+                    {
+                        // CRITICAL: We must CLONE each element before adding it to our list
+                        // because the jsonDoc will be disposed at the end of the loop.
+                        foreach (var element in valueElement.EnumerateArray())
+                        {
+                            allEmployeeElements.Add(element.Clone());
+                        }
+                    }
+
+                    // Check if the '@odata.nextLink' property exists in the response
+                    if (root.TryGetProperty("@odata.nextLink", out var nextLinkElement))
+                    {
+                        // It exists, so there are more pages. Get the URL for the next loop.
+                        var fullNextLink = nextLinkElement.GetString();
+                        // We only need the relative path, not the full server address
+                        nextLink = _httpClient.BaseAddress != null
+                            ? fullNextLink?.Replace(_httpClient.BaseAddress.ToString(), "")
+                            : fullNextLink;
+                    }
+                    else
+                    {
+                        // No nextLink found. This was the last page. End the loop.
+                        nextLink = null;
+                    }
+                }
+            }
+
+            _logger.LogInformation("Successfully fetched a total of {Count} Sales Employees from all pages.", allEmployeeElements.Count);
+
+            // Manually construct a final JSON object that looks like a single, complete SAP response
+            var finalResult = new { value = allEmployeeElements };
+            return JsonSerializer.Serialize(finalResult);
         }
+
+        // --- THIS IS THE CORRECTED CREATE METHOD, IMPLEMENTING YOUR ANALYSIS ---
+        // Find this method in your Services/SapService.cs file
+        // Find this method in your Services/SapService.cs file
 
         public async Task<string> CreateSalesEmployeeAsync(SalesEmployee employee)
         {
             await EnsureLoginAsync();
+
+            // --- THIS IS THE FINAL, DEFINITIVE FIX BASED ON SAP DOCUMENTATION ---
+            // The payload MUST match the example exactly.
             var sapPayload = new
             {
-                SalesEmployeeName = employee.Name,
+                SalesEmployeeName = employee.Name.Trim(), // Use "SalesEmployeeName"
                 Mobile = employee.ContactNumber,
                 Email = employee.Email,
                 Remarks = employee.Remarks,
                 Active = "tYES"
             };
-            var content = new StringContent(JsonSerializer.Serialize(sapPayload), Encoding.UTF8, "application/json");
+            // --- END OF FIX ---
+
+            var sapJsonOptions = new JsonSerializerOptions
+            {
+                PropertyNamingPolicy = null // This is still correct to preserve PascalCase
+            };
+
+            var content = new StringContent(JsonSerializer.Serialize(sapPayload, sapJsonOptions), Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("Sending final payload to SAP: {Payload}", await content.ReadAsStringAsync());
+
             var response = await _httpClient.PostAsync("SalesPersons", content);
+
+            var responseBody = await response.Content.ReadAsStringAsync();
+            _logger.LogInformation("SAP CREATE RESPONSE BODY: {Body}", responseBody);
 
             if (!response.IsSuccessStatusCode)
             {
                 var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("SAP Error on Create. Status: {StatusCode}. Response: {Response}", response.StatusCode, errorContent);
                 throw new HttpRequestException(errorContent, null, response.StatusCode);
             }
             return await response.Content.ReadAsStringAsync();
         }
-
-        // File: Services/SapService.cs
-        // File: Services/SapService.cs
 
         public async Task<JsonNode?> GetCombinedSalesEmployeeDetailsAsync(int salesEmployeeCode)
         {
@@ -1301,7 +1370,239 @@ namespace backendDistributor.Services // Make sure this namespace matches your p
             // A successful DELETE returns 204 No Content.
         }
 
+        public async Task<string> GetSalesOrdersAsync()
+        {
+            await EnsureLoginAsync();
+            // Select only the most important fields for the list view to improve performance
+            var fields = "DocEntry,DocNum,DocDate,CardCode,CardName,DocTotal,Comments";
+            var requestUrl = $"Orders?$select={fields}&$orderby=DocDate desc";
 
+            var response = await _httpClient.GetAsync(requestUrl);
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                await LoginAsync();
+                response = await _httpClient.GetAsync(requestUrl);
+            }
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        // --- GET A SINGLE SALES ORDER BY ITS ID (DocEntry) ---
+        public async Task<string> GetSalesOrderByIdAsync(int docEntry)
+        {
+            await EnsureLoginAsync();
+
+            // STEP 1: Fetch the main order header data.
+            var headerRequestUrl = $"Orders({docEntry})";
+            _logger.LogInformation("Fetching Sales Order Header from SAP: {Url}", headerRequestUrl);
+            var headerResponse = await _httpClient.GetAsync(headerRequestUrl);
+
+            if (headerResponse.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                await LoginAsync();
+                headerResponse = await _httpClient.GetAsync(headerRequestUrl);
+            }
+            headerResponse.EnsureSuccessStatusCode();
+
+            // Parse the header data into a JsonNode, which is mutable.
+            var headerJson = await headerResponse.Content.ReadAsStringAsync();
+            JsonNode? orderNode = JsonNode.Parse(headerJson);
+
+            if (orderNode == null)
+            {
+                throw new Exception("Failed to parse order header data.");
+            }
+
+            // STEP 2: Fetch the document lines (items) separately.
+            var linesRequestUrl = $"Orders({docEntry})/DocumentLines";
+            _logger.LogInformation("Fetching Sales Order Lines from SAP: {Url}", linesRequestUrl);
+            var linesResponse = await _httpClient.GetAsync(linesRequestUrl);
+
+            // It's okay if this call fails (e.g., an order with no lines), but we should log it.
+            if (linesResponse.IsSuccessStatusCode)
+            {
+                var linesJson = await linesResponse.Content.ReadAsStringAsync();
+                JsonNode? linesNode = JsonNode.Parse(linesJson);
+
+                // STEP 3: Manually add the "DocumentLines" property to our main order object.
+                if (linesNode != null && linesNode["value"] is JsonArray linesArray)
+                {
+                    orderNode["DocumentLines"] = linesArray.DeepClone(); // Add the lines to the header object
+                }
+            }
+            else
+            {
+                _logger.LogWarning("Could not fetch document lines for DocEntry {DocEntry}. Status: {StatusCode}", docEntry, linesResponse.StatusCode);
+                // Add an empty array so the frontend doesn't crash
+                orderNode["DocumentLines"] = new JsonArray();
+            }
+
+            // Return the final, combined JSON object as a string.
+            return orderNode.ToString();
+        }
+        public async Task<string> CreateSalesOrderAsync(JsonElement orderData)
+        {
+            await EnsureLoginAsync();
+            var content = new StringContent(orderData.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PostAsync("Orders", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to create SAP Sales Order. Status: {StatusCode}, Response: {ErrorContent}", response.StatusCode, responseContent);
+                // Throw an exception with the detailed error message from SAP
+                throw new HttpRequestException(responseContent, null, response.StatusCode);
+            }
+
+            _logger.LogInformation("Successfully created SAP Sales Order.");
+            return responseContent;
+        }
+
+        // --- UPDATE AN EXISTING SALES ORDER
+        public async Task UpdateSalesOrderAsync(int docEntry, JsonElement orderData)
+        {
+            await EnsureLoginAsync();
+
+            var sapPayload = new JsonObject();
+
+            // ---------------------------------------------------------
+            // MAP ONLY HEADER FIELDS (Safe Updates)
+            // ---------------------------------------------------------
+
+            if (orderData.TryGetProperty("DocDueDate", out var docDueDate))
+                sapPayload["DocDueDate"] = docDueDate.GetString();
+
+            if (orderData.TryGetProperty("Comments", out var comments))
+                sapPayload["Comments"] = comments.GetString();
+
+            if (orderData.TryGetProperty("NumAtCard", out var numAtCard))
+                sapPayload["NumAtCard"] = numAtCard.GetString();
+
+            if (orderData.TryGetProperty("SalesPersonCode", out var slpCode) && slpCode.GetInt32() > 0)
+                sapPayload["SalesPersonCode"] = slpCode.GetInt32();
+
+            // ❌ NO DOCUMENT LINES (Prevents -1029 Errors)
+
+            // ---------------------------------------------------------
+            // SEND PATCH
+            // ---------------------------------------------------------
+            var requestUrl = $"Orders({docEntry})";
+            var payloadString = sapPayload.ToJsonString();
+            var content = new StringContent(payloadString, Encoding.UTF8, "application/json");
+
+            _logger.LogInformation("Attempting HEADER-ONLY PATCH for Sales Order {docEntry}.", docEntry);
+
+            var response = await _httpClient.PatchAsync(requestUrl, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Update Failed: {Status} - {Error}", response.StatusCode, errorContent);
+                throw new HttpRequestException(errorContent, null, response.StatusCode);
+            }
+        }
+
+        public async Task<string> GetVendorsAsync(string? group, string? searchTerm, int pageNumber, int pageSize)
+        {
+            await EnsureLoginAsync();
+
+            // The logic is identical to GetCustomersAsync, we just change the CardType
+            var filterClauses = new List<string> { "CardType eq 'cSupplier'" }; // <-- THE ONLY KEY CHANGE
+
+            if (!string.IsNullOrEmpty(group))
+            {
+                filterClauses.Add($"GroupCode eq {group}");
+            }
+
+            if (!string.IsNullOrEmpty(searchTerm))
+            {
+                var sanitizedTerm = searchTerm.Trim().Replace("'", "''");
+                if (!string.IsNullOrEmpty(sanitizedTerm))
+                {
+                    var nameFilter = $"(CardName ne null and substringof('{sanitizedTerm}', CardName))";
+                    var codeFilter = $"(CardCode ne null and substringof('{sanitizedTerm}', CardCode))";
+                    filterClauses.Add($"({nameFilter} or {codeFilter})");
+                }
+            }
+
+            var filterQuery = string.Join(" and ", filterClauses);
+            var encodedFilter = WebUtility.UrlEncode(filterQuery);
+            int skip = (pageNumber - 1) * pageSize;
+
+            // We select the same fields as customers, minus SalesPersonCode as it's not typical for vendors
+            var fields = "CardCode,CardName,CurrentAccountBalance,BPAddresses,Notes,CreditLimit";
+
+            var requestUrl = $"BusinessPartners?$filter={encodedFilter}&$select={fields}&$skip={skip}&$top={pageSize}&$count=true";
+
+            _logger.LogInformation("SAP Vendor Query URL: {Url}", requestUrl);
+
+            var response = await _httpClient.GetAsync(requestUrl);
+
+            if (response.StatusCode == HttpStatusCode.Unauthorized)
+            {
+                _logger.LogInformation("SAP session expired. Attempting to re-login.");
+                await LoginAsync();
+                response = await _httpClient.GetAsync(requestUrl);
+            }
+
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
+
+        public async Task<string> CreateVendorAsync(JsonElement vendorData)
+        {
+            await EnsureLoginAsync(); // Guarantees we are logged in
+
+            var content = new StringContent(vendorData.ToString(), Encoding.UTF8, "application/json");
+            // We post to the same BusinessPartners endpoint for both customers and vendors
+            var response = await _httpClient.PostAsync("BusinessPartners", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogError("Failed to create SAP Vendor (Business Partner). Status: {StatusCode}, Response: {ErrorContent}", response.StatusCode, responseContent);
+                throw new HttpRequestException(responseContent, null, response.StatusCode);
+            }
+
+            _logger.LogInformation("Successfully created SAP Vendor (Business Partner).");
+            return responseContent;
+        }
+
+        public async Task UpdateVendorAsync(string cardCode, JsonElement vendorData)
+        {
+            await EnsureLoginAsync();
+
+            // SAP uses PATCH for updates
+            var requestUrl = $"BusinessPartners('{cardCode}')";
+            var content = new StringContent(vendorData.ToString(), Encoding.UTF8, "application/json");
+
+            var response = await _httpClient.PatchAsync(requestUrl, content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                _logger.LogError("Failed to update SAP Vendor. Status: {StatusCode}, Response: {ErrorContent}", response.StatusCode, errorContent);
+                throw new HttpRequestException(errorContent, null, response.StatusCode);
+            }
+            // A successful PATCH returns 204 No Content.
+        }
+
+        public async Task<string> GetVendorGroupsAsync()
+        {
+            await EnsureLoginAsync();
+
+            // We filter BusinessPartnerGroups by the Vendor type
+            var filter = "Type eq 'bbpgt_VendorGroup'";
+            var requestUrl = $"BusinessPartnerGroups?$select=Code,Name,Type&$filter={filter}";
+
+            _logger.LogInformation("Fetching Vendor Groups from SAP: {Url}", requestUrl);
+
+            var response = await _httpClient.GetAsync(requestUrl);
+            response.EnsureSuccessStatusCode();
+            return await response.Content.ReadAsStringAsync();
+        }
         public void Dispose()
         {
             _httpClient?.Dispose();

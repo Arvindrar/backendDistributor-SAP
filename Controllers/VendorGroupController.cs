@@ -1,11 +1,7 @@
-﻿// backendDistributor/Controllers/VendorGroupController.cs
+﻿// REPLACE the entire content of Controllers/VendorGroupController.cs
+using backendDistributor.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using backendDistributor.Models;
-using System;
-using System.Linq;
-using System.Threading.Tasks;
-using System.Collections.Generic;
+using System.Text.Json.Nodes; // Required for JsonNode
 
 namespace backendDistributor.Controllers
 {
@@ -13,148 +9,71 @@ namespace backendDistributor.Controllers
     [ApiController]
     public class VendorGroupController : ControllerBase
     {
-        private readonly CustomerDbContext _context;
+        private readonly VendorGroupService _vendorGroupService;
+        private readonly ILogger<VendorGroupController> _logger;
 
-        public VendorGroupController(CustomerDbContext context)
+        public VendorGroupController(VendorGroupService vendorGroupService, ILogger<VendorGroupController> logger)
         {
-            _context = context;
+            _vendorGroupService = vendorGroupService;
+            _logger = logger;
         }
 
         // GET: api/VendorGroup
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<VendorGroup>>> GetVendorGroups()
+        public async Task<IActionResult> GetVendorGroups()
         {
-            if (_context.VendorGroups == null)
+            try
             {
-                return NotFound("VendorGroups data store is not available.");
+                var result = await _vendorGroupService.GetAllAsync();
+                return Content(result, "application/json");
             }
-            return await _context.VendorGroups.OrderBy(vg => vg.Name).ToListAsync();
-        }
-
-        // GET: api/VendorGroup/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<VendorGroup>> GetVendorGroup(int id)
-        {
-            if (_context.VendorGroups == null)
+            catch (Exception ex)
             {
-                return NotFound();
+                _logger.LogError(ex, "Failed to get vendor groups.");
+                return StatusCode(500, new { message = "An internal server error occurred." });
             }
-            var vendorGroup = await _context.VendorGroups.FindAsync(id);
-            if (vendorGroup == null)
-            {
-                return NotFound($"VendorGroup with ID {id} not found.");
-            }
-            return vendorGroup;
         }
 
         // POST: api/VendorGroup
         [HttpPost]
-        public async Task<ActionResult<VendorGroup>> PostVendorGroup(VendorGroup vendorGroup)
+        public async Task<IActionResult> CreateVendorGroup([FromBody] JsonNode groupData)
         {
-            if (_context.VendorGroups == null)
-            {
-                return Problem("Entity set 'CustomerDbContext.VendorGroups' is null.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            // Ensure the incoming name is not null or empty before comparing
-            if (string.IsNullOrWhiteSpace(vendorGroup.Name))
-            {
-                ModelState.AddModelError("Name", "Vendor Group Name cannot be empty.");
-                return BadRequest(ModelState);
-            }
-
-            // CORRECTED: Case-insensitive check that can be translated to SQL
-            var vendorGroupNameLower = vendorGroup.Name.ToLower(); // Convert input to lower once
-            if (await _context.VendorGroups.AnyAsync(vg =>
-                    vg.Name != null && // Still good to check for null in DB data
-                    vg.Name.ToLower() == vendorGroupNameLower))
-            {
-                return Conflict(new { message = $"A vendor group with the name '{vendorGroup.Name}' already exists." });
-            }
-
-            _context.VendorGroups.Add(vendorGroup);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(nameof(GetVendorGroup), new { id = vendorGroup.Id }, vendorGroup);
-        }
-
-        // PUT: api/VendorGroup/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutVendorGroup(int id, VendorGroup vendorGroup)
-        {
-            if (id != vendorGroup.Id)
-            {
-                return BadRequest("ID mismatch.");
-            }
-
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            if (string.IsNullOrWhiteSpace(vendorGroup.Name))
-            {
-                ModelState.AddModelError("Name", "Vendor Group Name cannot be empty.");
-                return BadRequest(ModelState);
-            }
-
-            // CORRECTED: Case-insensitive check that can be translated to SQL
-            var vendorGroupNameLower = vendorGroup.Name.ToLower(); // Convert input to lower once
-            if (await _context.VendorGroups.AnyAsync(vg =>
-                    vg.Id != id && // Exclude the current group being updated
-                    vg.Name != null &&
-                    vg.Name.ToLower() == vendorGroupNameLower))
-            {
-                return Conflict(new { message = $"Another vendor group with the name '{vendorGroup.Name}' already exists." });
-            }
-
-            _context.Entry(vendorGroup).State = EntityState.Modified;
-
             try
             {
-                await _context.SaveChangesAsync();
+                var result = await _vendorGroupService.AddAsync(groupData);
+                return CreatedAtAction(nameof(GetVendorGroups), new { }, result);
             }
-            catch (DbUpdateConcurrencyException)
+            catch (Exception ex)
             {
-                if (!VendorGroupExists(id))
+                _logger.LogError(ex, "Failed to create vendor group.");
+                // Check for duplicate error from SAP
+                if (ex.Message.Contains("already exists"))
                 {
-                    return NotFound($"VendorGroup with ID {id} not found.");
+                    return Conflict(new { message = "This vendor group name already exists." });
                 }
-                else
-                {
-                    throw;
-                }
+                return StatusCode(500, new { message = $"An error occurred: {ex.Message}" });
             }
-
-            return NoContent();
         }
 
         // DELETE: api/VendorGroup/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteVendorGroup(int id)
         {
-            if (_context.VendorGroups == null)
+            try
             {
-                return NotFound();
+                await _vendorGroupService.DeleteAsync(id);
+                return NoContent(); // Success
             }
-            var vendorGroup = await _context.VendorGroups.FindAsync(id);
-            if (vendorGroup == null)
+            catch (Exception ex)
             {
-                return NotFound($"VendorGroup with ID {id} not found.");
+                _logger.LogError(ex, "Failed to delete vendor group with ID {id}.", id);
+                // Check for 'in use' error from SAP
+                if (ex.Message.Contains("Linked"))
+                {
+                    return Conflict(new { message = "Cannot delete group. It is already in use by one or more vendors." });
+                }
+                return StatusCode(500, new { message = "An internal server error occurred." });
             }
-            _context.VendorGroups.Remove(vendorGroup);
-            await _context.SaveChangesAsync();
-            return NoContent();
-        }
-
-        private bool VendorGroupExists(int id)
-        {
-            return (_context.VendorGroups?.Any(e => e.Id == id)).GetValueOrDefault();
         }
     }
 }

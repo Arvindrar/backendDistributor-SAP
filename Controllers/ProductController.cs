@@ -14,24 +14,22 @@ using Microsoft.Extensions.Logging;
 
 namespace backendDistributor.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Products")]
     [ApiController]
     public class ProductController : ControllerBase
     {
         private readonly ProductService _productService;
-        private readonly CustomerDbContext _context;
-        private readonly IWebHostEnvironment _hostingEnvironment;
         private readonly ILogger<ProductController> _logger;
 
+        // --- THIS IS THE FIX ---
+        // The constructor now only injects the dependencies it actually uses.
+        // CustomerDbContext and IWebHostEnvironment have been removed because
+        // they are already injected into the ProductService.
         public ProductController(
             ProductService productService,
-            CustomerDbContext context,
-            IWebHostEnvironment hostingEnvironment,
             ILogger<ProductController> logger)
         {
             _productService = productService;
-            _context = context;
-            _hostingEnvironment = hostingEnvironment;
             _logger = logger;
         }
 
@@ -47,39 +45,31 @@ namespace backendDistributor.Controllers
             try
             {
                 var createdProduct = await _productService.CreateProductAsync(productDto);
-                // Return a 201 Created status. The body will contain the SQL entity or the SAP JSON object.
-                return CreatedAtAction(nameof(GetProduct), new { id = 0 }, createdProduct);
+
+                // THE FIX:
+                // 1. Get the SKU from the newly created product object.
+                //    We use reflection here because the return type is 'object'.
+                var sku = createdProduct.GetType().GetProperty("SKU")?.GetValue(createdProduct)?.ToString();
+
+                // 2. Reference the correct Get method: 'GetProductBySku'.
+                // 3. Pass the 'sku' as the route parameter.
+                return CreatedAtAction(nameof(GetProductBySku), new { sku = sku }, createdProduct);
             }
-            catch (InvalidOperationException ex) // Catches "already exists" from SQL
-            {
-                return Conflict(new { message = ex.Message });
-            }
-            catch (HttpRequestException ex) // Catches errors from SAP
-            {
-                var errorResponse = new
-                {
-                    message = "An error occurred while communicating with the remote data source.",
-                    details = ex.Message,
-                };
-                return StatusCode((int)(ex.StatusCode ?? HttpStatusCode.InternalServerError), errorResponse);
-            }
-            catch (Exception ex) // Catches all other errors
+            catch (Exception ex)
             {
                 _logger.LogError(ex, "An unexpected error occurred while creating a product.");
-                return StatusCode(500, new { message = "An internal server error occurred.", details = ex.Message });
+                return BadRequest(new { message = ex.Message });
             }
         }
-
         // --- Your existing SQL-only methods ---
 
         [HttpGet]
         public async Task<ActionResult<IEnumerable<object>>> GetProducts(
-    [FromQuery] string? group,
-    [FromQuery] string? searchTerm)
+             [FromQuery] string? group,
+             [FromQuery] string? searchTerm)
         {
             try
             {
-                // This single line now handles fetching from both SQL and SAP!
                 var products = await _productService.GetAllAsync(group, searchTerm);
                 return Ok(products);
             }
@@ -90,35 +80,39 @@ namespace backendDistributor.Controllers
             }
         }
 
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<Product>> GetProduct(int id)
+        [HttpGet("{sku}")]
+        public async Task<ActionResult<Product>> GetProductBySku(string sku)
         {
-            if (_context.Products == null)
+            try
             {
-                return Problem("Entity set 'CustomerDbContext.Products' is null.", statusCode: 500);
+                var product = await _productService.GetBySkuAsync(sku);
+                if (product == null)
+                {
+                    return NotFound($"Product with SKU '{sku}' not found.");
+                }
+                return Ok(product);
             }
-            var product = await _context.Products.FindAsync(id);
-            if (product == null)
+            catch (Exception ex)
             {
-                return NotFound($"Product with ID {id} not found.");
+                _logger.LogError(ex, "Error getting product by SKU {SKU}", sku);
+                return StatusCode(500, "An internal server error occurred.");
             }
-            return product;
         }
+        //[HttpGet("{id:int}")]
+        //public async Task<ActionResult<Product>> GetProduct(int id)
+        //{
+        //    if (_context.Products == null)
+        //    {
+        //        return Problem("Entity set 'CustomerDbContext.Products' is null.", statusCode: 500);
+        //    }
+        //    var product = await _context.Products.FindAsync(id);
+        //    if (product == null)
+        //    {
+        //        return NotFound($"Product with ID {id} not found.");
+        //    }
+        //    return product;
+        //}
 
-        [HttpDelete("{id:int}")]
-        public async Task<IActionResult> DeleteProduct(int id)
-        {
-            // This is your original SQL delete logic.
-            // ...
-            return NoContent();
-        }
 
-        [HttpPut("{id:int}")]
-        public async Task<IActionResult> PutProduct(int id, [FromForm] ProductCreateDto productDto)
-        {
-            // This is your original SQL update logic.
-            // ...
-            return NoContent();
-        }
     }
 }

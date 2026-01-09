@@ -329,7 +329,7 @@
         }
       }
     },
-    "/api/Customer": {
+    "/api/Customers": {
       "get": {
         "tags": [
           "Customer"
@@ -364,7 +364,7 @@
             "schema": {
               "type": "integer",
               "format": "int32",
-              "default": 8
+              "default": 1000
             }
           }
         ],
@@ -391,6 +391,28 @@
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/Customers/{id}": {
+      "get": {
+        "tags": [
+          "Customer"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -869,7 +891,7 @@
         }
       }
     },
-    "/api/Product": {
+    "/api/Products": {
       "post": {
         "tags": [
           "Product"
@@ -1001,19 +1023,18 @@
         }
       }
     },
-    "/api/Product/{id}": {
+    "/api/Products/{sku}": {
       "get": {
         "tags": [
           "Product"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "sku",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             }
           }
         ],
@@ -1037,122 +1058,6 @@
                 }
               }
             }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "Product"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "multipart/form-data": {
-              "schema": {
-                "required": [
-                  "ProductGroup",
-                  "ProductName",
-                  "SKU",
-                  "UOM"
-                ],
-                "type": "object",
-                "properties": {
-                  "SKU": {
-                    "type": "string"
-                  },
-                  "ProductName": {
-                    "type": "string"
-                  },
-                  "ProductGroup": {
-                    "type": "string"
-                  },
-                  "UOM": {
-                    "type": "string"
-                  },
-                  "UOMGroup": {
-                    "type": "string"
-                  },
-                  "HSN": {
-                    "type": "string"
-                  },
-                  "RetailPrice": {
-                    "type": "string"
-                  },
-                  "WholesalePrice": {
-                    "type": "string"
-                  },
-                  "ProductImage": {
-                    "type": "string",
-                    "format": "binary"
-                  }
-                }
-              },
-              "encoding": {
-                "SKU": {
-                  "style": "form"
-                },
-                "ProductName": {
-                  "style": "form"
-                },
-                "ProductGroup": {
-                  "style": "form"
-                },
-                "UOM": {
-                  "style": "form"
-                },
-                "UOMGroup": {
-                  "style": "form"
-                },
-                "HSN": {
-                  "style": "form"
-                },
-                "RetailPrice": {
-                  "style": "form"
-                },
-                "WholesalePrice": {
-                  "style": "form"
-                },
-                "ProductImage": {
-                  "style": "form"
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK"
           }
         }
       }
@@ -1629,17 +1534,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SalesEmployee"
+                "$ref": "#/components/schemas/SalesEmployeeCreateDto"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/SalesEmployee"
+                "$ref": "#/components/schemas/SalesEmployeeCreateDto"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/SalesEmployee"
+                "$ref": "#/components/schemas/SalesEmployeeCreateDto"
               }
             }
           }
@@ -1770,42 +1675,30 @@
       }
     },
     "/api/SalesOrders": {
+      "get": {
+        "tags": [
+          "SalesOrders"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
       "post": {
         "tags": [
           "SalesOrders"
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "Payload": {
-                    "type": "string"
-                  },
-                  "UploadedFiles": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "FilesToDeleteJson": {
-                    "type": "string"
-                  }
-                }
-              },
-              "encoding": {
-                "Payload": {
-                  "style": "form"
-                },
-                "UploadedFiles": {
-                  "style": "form"
-                },
-                "FilesToDeleteJson": {
-                  "style": "form"
-                }
-              }
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
             }
           }
         },
@@ -1814,153 +1707,58 @@
             "description": "OK"
           }
         }
-      },
+      }
+    },
+    "/api/SalesOrders/{docEntry}": {
       "get": {
         "tags": [
           "SalesOrders"
         ],
         "parameters": [
           {
-            "name": "salesOrderNo",
-            "in": "query",
+            "name": "docEntry",
+            "in": "path",
+            "required": true,
             "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "customerName",
-            "in": "query",
-            "schema": {
-              "type": "string"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SalesOrderListDto"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SalesOrderListDto"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SalesOrderListDto"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
-      }
-    },
-    "/api/SalesOrders/{id}": {
+      },
       "put": {
         "tags": [
           "SalesOrders"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "docEntry",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "string",
-              "format": "uuid"
+              "type": "integer",
+              "format": "int32"
             }
           }
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "Payload": {
-                    "type": "string"
-                  },
-                  "UploadedFiles": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "binary"
-                    }
-                  },
-                  "FilesToDeleteJson": {
-                    "type": "string"
-                  }
-                }
-              },
-              "encoding": {
-                "Payload": {
-                  "style": "form"
-                },
-                "UploadedFiles": {
-                  "style": "form"
-                },
-                "FilesToDeleteJson": {
-                  "style": "form"
-                }
-              }
+            "application/json": {
+              "schema": { }
+            },
+            "text/json": {
+              "schema": { }
+            },
+            "application/*+json": {
+              "schema": { }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "get": {
-        "tags": [
-          "SalesOrders"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "SalesOrders"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -2456,37 +2254,29 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "pageNumber",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 8
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Vendor"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Vendor"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Vendor"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -2497,82 +2287,41 @@
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             },
             "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             },
             "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             }
           }
         },
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
     },
-    "/api/Vendor/{id}": {
+    "/api/Vendor/{cardCode}": {
       "get": {
         "tags": [
           "Vendor"
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "cardCode",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             }
           }
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Vendor"
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -2582,55 +2331,27 @@
         ],
         "parameters": [
           {
-            "name": "id",
+            "name": "cardCode",
             "in": "path",
             "required": true,
             "schema": {
-              "type": "integer",
-              "format": "int32"
+              "type": "string"
             }
           }
         ],
         "requestBody": {
           "content": {
             "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             },
             "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             },
             "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/Vendor"
-              }
+              "schema": { }
             }
           }
         },
-        "responses": {
-          "200": {
-            "description": "OK"
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Vendor"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -2645,33 +2366,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VendorGroup"
-                  }
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VendorGroup"
-                  }
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/VendorGroup"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       },
@@ -2683,114 +2378,17 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
+                "$ref": "#/components/schemas/JsonNode"
               }
             },
             "text/json": {
               "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
+                "$ref": "#/components/schemas/JsonNode"
               }
             },
             "application/*+json": {
               "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/VendorGroup/{id}": {
-      "get": {
-        "tags": [
-          "VendorGroup"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "text/plain": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              },
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              },
-              "text/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VendorGroup"
-                }
-              }
-            }
-          }
-        }
-      },
-      "put": {
-        "tags": [
-          "VendorGroup"
-        ],
-        "parameters": [
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int32"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
-              }
-            },
-            "text/json": {
-              "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
-              }
-            },
-            "application/*+json": {
-              "schema": {
-                "$ref": "#/components/schemas/VendorGroup"
+                "$ref": "#/components/schemas/JsonNode"
               }
             }
           }
@@ -2800,7 +2398,9 @@
             "description": "OK"
           }
         }
-      },
+      }
+    },
+    "/api/VendorGroup/{id}": {
       "delete": {
         "tags": [
           "VendorGroup"
@@ -3335,48 +2935,68 @@
         },
         "additionalProperties": false
       },
-      "Product": {
-        "required": [
-          "group",
-          "name",
-          "sku",
-          "uom"
-        ],
+      "ItemPrice": {
         "type": "object",
         "properties": {
-          "id": {
+          "priceList": {
             "type": "integer",
             "format": "int32"
           },
-          "sku": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string"
+          "price": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonNode": {
+        "type": "object",
+        "properties": {
+          "options": {
+            "$ref": "#/components/schemas/JsonNodeOptions"
           },
-          "name": {
-            "maxLength": 150,
-            "minLength": 0,
-            "type": "string"
+          "parent": {
+            "$ref": "#/components/schemas/JsonNode"
           },
-          "group": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string"
-          },
-          "uomGroup": {
-            "maxLength": 50,
-            "minLength": 0,
+          "root": {
+            "$ref": "#/components/schemas/JsonNode"
+          }
+        },
+        "additionalProperties": false
+      },
+      "JsonNodeOptions": {
+        "type": "object",
+        "properties": {
+          "propertyNameCaseInsensitive": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "Product": {
+        "type": "object",
+        "properties": {
+          "ItemCode": {
             "type": "string",
             "nullable": true
           },
-          "uom": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string"
+          "ItemName": {
+            "type": "string",
+            "nullable": true
           },
-          "hsn": {
-            "maxLength": 20,
-            "minLength": 0,
+          "group": {
+            "type": "string",
+            "nullable": true
+          },
+          "uomGroup": {
+            "type": "string",
+            "nullable": true
+          },
+          "InventoryUOM": {
+            "type": "string",
+            "nullable": true
+          },
+          "U_HS_Code": {
             "type": "string",
             "nullable": true
           },
@@ -3390,10 +3010,15 @@
             "format": "double",
             "nullable": true
           },
-          "imageFileName": {
-            "maxLength": 255,
-            "minLength": 0,
+          "Picture": {
             "type": "string",
+            "nullable": true
+          },
+          "ItemPrices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemPrice"
+            },
             "nullable": true
           }
         },
@@ -3440,80 +3065,69 @@
       },
       "SalesEmployee": {
         "required": [
+          "SalesEmployeeName"
+        ],
+        "type": "object",
+        "properties": {
+          "SalesEmployeeCode": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string",
+            "nullable": true
+          },
+          "SalesEmployeeName": {
+            "minLength": 1,
+            "type": "string"
+          },
+          "Mobile": {
+            "type": "string",
+            "nullable": true
+          },
+          "Email": {
+            "type": "string",
+            "nullable": true
+          },
+          "Remarks": {
+            "type": "string",
+            "nullable": true
+          },
+          "Active": {
+            "type": "string",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "SalesEmployeeCreateDto": {
+        "required": [
+          "code",
           "contactNumber",
           "name"
         ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
           "code": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
+            "minLength": 1,
+            "type": "string"
           },
           "name": {
-            "maxLength": 150,
-            "minLength": 0,
+            "minLength": 1,
             "type": "string"
           },
           "contactNumber": {
-            "maxLength": 20,
-            "minLength": 0,
+            "minLength": 1,
             "type": "string"
           },
           "email": {
-            "maxLength": 100,
-            "minLength": 0,
             "type": "string",
             "format": "email",
             "nullable": true
           },
           "remarks": {
-            "maxLength": 1000,
-            "minLength": 0,
             "type": "string",
             "nullable": true
-          },
-          "isActive": {
-            "type": "boolean"
-          }
-        },
-        "additionalProperties": false
-      },
-      "SalesOrderListDto": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "salesOrderNo": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerCode": {
-            "type": "string",
-            "nullable": true
-          },
-          "customerName": {
-            "type": "string",
-            "nullable": true
-          },
-          "soDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "salesRemarks": {
-            "type": "string",
-            "nullable": true
-          },
-          "orderTotal": {
-            "type": "number",
-            "format": "double"
           }
         },
         "additionalProperties": false
@@ -3636,134 +3250,6 @@
           "createdDate": {
             "type": "string",
             "format": "date-time"
-          }
-        },
-        "additionalProperties": false
-      },
-      "Vendor": {
-        "required": [
-          "code",
-          "mailId",
-          "name",
-          "shippingType"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "code": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string"
-          },
-          "name": {
-            "maxLength": 200,
-            "minLength": 0,
-            "type": "string"
-          },
-          "group": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "balance": {
-            "type": "number",
-            "format": "double"
-          },
-          "remarks": {
-            "maxLength": 500,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "contactNumber": {
-            "maxLength": 10,
-            "minLength": 10,
-            "pattern": "^\\d{10}$",
-            "type": "string",
-            "nullable": true
-          },
-          "mailId": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "format": "email"
-          },
-          "shippingType": {
-            "maxLength": 50,
-            "minLength": 0,
-            "type": "string"
-          },
-          "address1": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "address2": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "street": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "postBox": {
-            "maxLength": 6,
-            "minLength": 6,
-            "pattern": "^\\d{6}$",
-            "type": "string",
-            "nullable": true
-          },
-          "city": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "state": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "country": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string",
-            "nullable": true
-          },
-          "gstin": {
-            "maxLength": 15,
-            "minLength": 15,
-            "pattern": "^[A-Z0-9]{15}$",
-            "type": "string",
-            "nullable": true
-          }
-        },
-        "additionalProperties": false
-      },
-      "VendorGroup": {
-        "required": [
-          "name"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "name": {
-            "maxLength": 100,
-            "minLength": 0,
-            "type": "string"
           }
         },
         "additionalProperties": false

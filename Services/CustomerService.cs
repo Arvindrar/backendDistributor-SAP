@@ -44,11 +44,36 @@ namespace backendDistributor.Services
 
                 var result = new
                 {
-                    odata_count = totalRecords,
+                   
                     value = customers
                 };
 
-                return JsonSerializer.Serialize(result, new JsonSerializerOptions { PropertyNamingPolicy = null, WriteIndented = true });
+                return JsonSerializer.Serialize(result);
+
+            }
+        }
+
+        public async Task<JsonElement?> GetByCardCodeAsync(string cardCode)
+        {
+            // THE FIX: Use the `_dataSource` field that exists in this class.
+            if (_dataSource.ToUpper() == "SAP")
+            {
+                _logger.LogInformation("--> CustomerService is fetching single customer from SAP by CardCode.");
+                var customerJson = await _sapService.GetCustomerByIdAsync(cardCode);
+
+                if (string.IsNullOrEmpty(customerJson)) return null;
+
+                // Return as JsonElement to match the AddAsync return type
+                return JsonDocument.Parse(customerJson).RootElement;
+            }
+            else
+            {
+                _logger.LogInformation("--> CustomerService is fetching single customer from SQL by CardCode.");
+                var customer = await _context.Customers.FirstOrDefaultAsync(c => c.CardCode == cardCode);
+                if (customer == null) return null;
+
+                var customerJson = JsonSerializer.Serialize(customer);
+                return JsonDocument.Parse(customerJson).RootElement;
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿// File: Controllers/CustomerController.cs
+using backendDistributor.Models;
 using backendDistributor.Services;
 using Microsoft.AspNetCore.Mvc;
 using System.Net;
@@ -6,7 +7,7 @@ using System.Text.Json;
 
 namespace backendDistributor.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/Customers")]
     [ApiController]
     public class CustomerController : ControllerBase
     {
@@ -25,12 +26,11 @@ namespace backendDistributor.Controllers
             [FromQuery] string? group,
             [FromQuery] string? searchTerm,
             [FromQuery] int pageNumber = 1,
-            [FromQuery] int pageSize = 8)
+            [FromQuery] int pageSize = 1000) // <-- CHANGED FROM 8 to 1000
         {
             try
             {
                 var sapJsonResult = await _customerService.GetAllAsync(group, searchTerm, pageNumber, pageSize);
-                // Return the raw JSON from the service
                 return Content(sapJsonResult, "application/json");
             }
             catch (Exception ex)
@@ -38,6 +38,19 @@ namespace backendDistributor.Controllers
                 _logger.LogError(ex, "Failed to get customers.");
                 return StatusCode(500, new { message = "An internal server error occurred." });
             }
+        }
+
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetCustomer(string id)
+        {
+            var customer = await _customerService.GetByCardCodeAsync(id);
+
+            if (customer == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(customer);
         }
 
         // POST: api/Customer

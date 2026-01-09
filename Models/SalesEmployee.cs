@@ -1,45 +1,44 @@
-﻿// backendDistributor/Models/SalesEmployee.cs
+﻿// Models/SalesEmployee.cs
+
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace backendDistributor.Models
 {
     public class SalesEmployee
     {
         [Key]
+        // This maps the incoming JSON property from SAP to our "Id" property
+        [JsonPropertyName("SalesEmployeeCode")]
         public int Id { get; set; }
 
-        [StringLength(50, ErrorMessage = "Employee Code cannot be longer than 50 characters.")]
+        // This property is set manually in the service, so no mapping is needed here
         public string Code { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Employee Name is required.")]
-        [StringLength(150, ErrorMessage = "Employee Name cannot be longer than 150 characters.")]
+        [Required(ErrorMessage = "Sales Employee Name is required.")]
+        [JsonPropertyName("SalesEmployeeName")]
         public string Name { get; set; } = string.Empty;
+        // --- END OF FIX ---
 
-        
+        [JsonPropertyName("Mobile")]
+        public string? ContactNumber { get; set; }
 
-        [Required(ErrorMessage = "Contact Number is required.")]
-        [StringLength(20, ErrorMessage = "Contact Number is too long.")] // Allows for country code like +91
-        public string ContactNumber { get; set; } = string.Empty;
+        [JsonPropertyName("Email")]
+        public string? Email { get; set; }
 
-        private string? _email;
-
-        [EmailAddress(ErrorMessage = "Invalid Email Address format.")]
-        [StringLength(100)]
-        public string? Email
-        {
-            get => _email;
-            // This custom setter is the key to the solution.
-            // It ensures that if the frontend sends an empty string "",
-            // it gets converted to null before validation happens.
-            set => _email = string.IsNullOrWhiteSpace(value) ? null : value;
-        }
-
-      
-
-        [StringLength(1000)]
+        [JsonPropertyName("Remarks")]
         public string? Remarks { get; set; }
 
-        // Optional: Keep track of active status
+        // The frontend and database will use this standard boolean property.
+        // We ignore it during deserialization from SAP because SAP sends a string.
+        [JsonIgnore]
         public bool IsActive { get; set; } = true;
+
+        // --- THIS IS THE FIX ---
+        // This helper property is added to catch the string value ("tYES" or "tNO")
+        // from the "Active" property in the SAP JSON response.
+        [JsonPropertyName("Active")]
+        public string? ActiveSap { get; set; }
+        // --- END OF FIX ---
     }
 }

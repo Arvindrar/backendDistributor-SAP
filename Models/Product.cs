@@ -1,5 +1,8 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿// PASTE THIS CORRECTED CODE INTO: Models/Product.cs
+
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json.Serialization; // <<< ADD THIS USING DIRECTIVE
 
 namespace backendDistributor.Models
 {
@@ -7,38 +10,40 @@ namespace backendDistributor.Models
     {
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
+        [JsonIgnore] // We don't get this from SAP, it's for the SQL DB
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Product Code is required.")]
-        [StringLength(50, ErrorMessage = "Product Code cannot be longer than 50 characters.")]
-        public string SKU { get; set; } // Corresponds to formData.productCode
+        [JsonPropertyName("ItemCode")]
+        public string SKU { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Product Name is required.")]
-        [StringLength(150, ErrorMessage = "Product Name cannot be longer than 150 characters.")]
-        public string Name { get; set; } // Corresponds to formData.productName
+        [JsonPropertyName("ItemName")]
+        public string Name { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Product Group is required.")]
-        [StringLength(100)]
-        public string Group { get; set; } // Corresponds to formData.productGroup
+        public string Group { get; set; } = string.Empty; // This is set manually after fetching
 
-        // ADDED UOMGroup HERE
-        [StringLength(50, ErrorMessage = "UOM Group cannot be longer than 50 characters.")] // Adjust length as needed
-        public string? UOMGroup { get; set; } // Corresponds to formData.uomGroup
+        public string? UOMGroup { get; set; }
 
-        [Required(ErrorMessage = "UOM is required.")]
-        [StringLength(50, ErrorMessage = "UOM cannot be longer than 50 characters.")]
-        public string UOM { get; set; } // Corresponds to formData.uom
+        [JsonPropertyName("InventoryUOM")]
+        public string UOM { get; set; } = string.Empty;
 
-        [StringLength(20, ErrorMessage = "HSN cannot be longer than 20 characters.")]
-        public string? HSN { get; set; } // Corresponds to formData.hsn
+        [JsonPropertyName("U_HS_Code")]
+        public string? HSN { get; set; }
 
-        [Column(TypeName = "decimal(18, 2)")]
-        public decimal? RetailPrice { get; set; } // DIRECTLY MATCHES formData.retailPrice
+        public decimal? RetailPrice { get; set; } // Set manually from ItemPrices
+        public decimal? WholesalePrice { get; set; } // Set manually from ItemPrices
 
-        [Column(TypeName = "decimal(18, 2)")]
-        public decimal? WholesalePrice { get; set; } // DIRECTLY MATCHES formData.wholesalePrice
+        [JsonPropertyName("Picture")]
+        public string? ImageFileName { get; set; }
 
-        [StringLength(255)]
-        public string? ImageFileName { get; set; } // Stores only the filename from imageFile
+        // This helper property will catch the nested ItemPrices array from SAP
+        [JsonPropertyName("ItemPrices")]
+        public List<ItemPrice> ItemPrices { get; set; } = new List<ItemPrice>();
+    }
+
+    // Helper class to deserialize the nested ItemPrices
+    public class ItemPrice
+    {
+        public int PriceList { get; set; }
+        public decimal Price { get; set; }
     }
 }

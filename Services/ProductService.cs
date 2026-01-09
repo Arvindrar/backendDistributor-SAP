@@ -37,89 +37,33 @@ namespace backendDistributor.Services
         {
             if (_dataSource.Equals("SAP", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("--> ProductService: Getting all products from SAP (Efficient Single-Call method).");
+                _logger.LogInformation("--> ProductService: Getting all products from SAP.");
 
-                string? groupCode = null; // Add your group lookup logic here if needed
+                string? groupCode = null; // Group lookup logic is fine
+                // ...
 
-                if (!string.IsNullOrEmpty(groupName) && !groupName.Equals("All Groups", StringComparison.OrdinalIgnoreCase))
-                {
-                    _logger.LogInformation("--> Searching for group code for group name: {GroupName}", groupName);
-                    // Fetch all product groups from SAP.
-                    var groupsJson = await _sapService.GetProductGroupsAsync();
-                    using var groupsDoc = JsonDocument.Parse(groupsJson);
-
-                    if (groupsDoc.RootElement.TryGetProperty("value", out var groupsElement))
-                    {
-                        // Find the group that matches the name (case-insensitive).
-                        var foundGroup = groupsElement.EnumerateArray()
-                            .FirstOrDefault(g =>
-                                g.TryGetProperty("GroupName", out var nameElement) &&
-                                nameElement.GetString()?.Equals(groupName, StringComparison.OrdinalIgnoreCase) == true);
-
-                        // If we found a match, get its numeric code.
-                        if (foundGroup.ValueKind != JsonValueKind.Undefined && foundGroup.TryGetProperty("Number", out var numberElement))
-                        {
-                            groupCode = numberElement.GetInt32().ToString();
-                            _logger.LogInformation("--> Found group code '{GroupCode}' for group name '{GroupName}'", groupCode, groupName);
-                        }
-                        else
-                        {
-                            _logger.LogWarning("--> Could not find a group code for group name: {GroupName}", groupName);
-                        }
-                    }
-                }
-                // STEP 1: Get the list of all products WITH prices included.
                 var sapJsonResult = await _sapService.GetProductsAsync(groupCode, searchTerm);
                 using var jsonDoc = JsonDocument.Parse(sapJsonResult);
 
-                if (!jsonDoc.RootElement.TryGetProperty("value", out var sapItemsElement))
+                if (jsonDoc.RootElement.TryGetProperty("value", out var sapItemsElement))
                 {
-                    return Enumerable.Empty<Product>();
-                }
+                    // THE FIX: Deserialize the entire array at once.
+                    var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+                    var productList = sapItemsElement.Deserialize<List<Product>>(options);
 
-                var productList = new List<Product>();
-
-                // ===================================================================================
-                // THE FIX IS HERE: A single, simple loop. No more parallel tasks.
-                // ===================================================================================
-                foreach (var item in sapItemsElement.EnumerateArray())
-                {
-                    // ===================================================================================
-                    // THE FIX IS HERE: This helper function is now robust against null price values.
-                    // ===================================================================================
-                    decimal? GetPrice(int priceListId)
+                    if (productList != null)
                     {
-                        if (item.TryGetProperty("ItemPrices", out var pricesElement))
+                        // After deserializing, loop through to set the prices
+                        foreach (var product in productList)
                         {
-                            var priceObj = pricesElement.EnumerateArray().FirstOrDefault(p => p.GetProperty("PriceList").GetInt32() == priceListId);
-                            // Check if the "Price" property exists AND its value is NOT null before trying to read it.
-                            if (priceObj.ValueKind != JsonValueKind.Undefined &&
-                                priceObj.TryGetProperty("Price", out var priceProp) &&
-                                priceProp.ValueKind != JsonValueKind.Null)
-                            {
-                                return priceProp.GetDecimal();
-                            }
+                            product.RetailPrice = product.ItemPrices?.FirstOrDefault(p => p.PriceList == 2)?.Price;
+                            product.WholesalePrice = product.ItemPrices?.FirstOrDefault(p => p.PriceList == 1)?.Price;
                         }
-                        return null;
+                        return productList;
                     }
-
-
-                    var product = new Product
-                    {
-                        Id = 0,
-                        SKU = item.TryGetProperty("ItemCode", out var code) ? code.GetString() : "",
-                        Name = item.TryGetProperty("ItemName", out var name) ? name.GetString() : "",
-                        UOM = item.TryGetProperty("InventoryUOM", out var uom) ? uom.GetString() : "",
-                        HSN = item.TryGetProperty("U_HS_Code", out var hsn) && hsn.ValueKind != JsonValueKind.Null ? hsn.GetString() : null,
-                        Group = groupName ?? "N/A",
-                        ImageFileName = item.TryGetProperty("Picture", out var pic) && pic.ValueKind != JsonValueKind.Null ? pic.GetString() : null,
-                        // Get prices directly from the item data
-                        RetailPrice = GetPrice(2),
-                        WholesalePrice = GetPrice(1)
-                    };
-                    productList.Add(product);
                 }
-                return productList;
+
+                return Enumerable.Empty<Product>();
             }
             else
             {
@@ -129,6 +73,26 @@ namespace backendDistributor.Services
                 return await query.OrderBy(p => p.Name).ToListAsync();
             }
         }
+
+
+        public async Task<Product?> GetBySkuAsync(string sku)
+        {
+            if (_dataSource.Equals("SAP", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogInformation("--> ProductService: Getting single product from SAP by SKU.");
+                // We can reuse the existing GetAllAsync and filter in memory,
+                // or create a specific GetProductBySku in SapService.
+                // For simplicity, let's filter here.
+                var allProducts = (await GetAllAsync(null, sku)) as IEnumerable<Product>;
+                return allProducts?.FirstOrDefault(p => p.SKU.Equals(sku, StringComparison.OrdinalIgnoreCase));
+            }
+            else
+            {
+                _logger.LogInformation("--> ProductService: Getting single product from SQL by SKU.");
+                return await _context.Products.FirstOrDefaultAsync(p => p.SKU == sku);
+            }
+        }
+
         public async Task<object> CreateProductAsync(ProductCreateDto productDto)
         {
             if (_dataSource.Equals("SAP", StringComparison.OrdinalIgnoreCase))

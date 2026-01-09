@@ -17,6 +17,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 
     // THIS IS THE NEW LINE: It tells .NET to output camelCase JSON
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
 });
 //...
 
@@ -55,6 +57,8 @@ builder.Services.AddScoped<SapService>();
 builder.Services.AddScoped<CustomerService>();
 
 builder.Services.AddScoped<CustomerGroupService>();
+builder.Services.AddScoped<VendorService>();
+builder.Services.AddScoped<VendorGroupService>();
 builder.Services.AddScoped<RouteService>();
 builder.Services.AddScoped<SalesEmployeeService>();
 builder.Services.AddScoped<ShippingTypeService>();
@@ -64,6 +68,7 @@ builder.Services.AddScoped<ProductGroupService>();
 builder.Services.AddScoped<UomService>();
 builder.Services.AddScoped<UomGroupService>();
 builder.Services.AddScoped<WarehouseService>();
+builder.Services.AddScoped<SalesOrderService>();
 
 
 builder.Services.AddDbContext<CustomerDbContext>(options =>
